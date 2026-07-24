@@ -24,7 +24,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sparkles, MessageSquare, Plus, Trash2, ChevronLeft, RefreshCw } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
-export const Route = createFileRoute("/_authenticated/documents/$documentId/")({
+export const Route = createFileRoute("/_authenticated/documents/$documentId")({
   head: ({ params }) => ({
     meta: [
       { title: "Document — StudyMind" },
