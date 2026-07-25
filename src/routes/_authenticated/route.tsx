@@ -32,20 +32,44 @@ function AuthedLayout() {
     <div className="min-h-screen bg-background">
       <header className="border-b border-border sticky top-0 z-40 bg-background/80 backdrop-blur">
         <div className="mx-auto max-w-6xl px-4 h-14 flex items-center justify-between gap-4">
-          <Link to="/dashboard" className="flex items-center gap-2 font-semibold">
-            <BookOpen className="h-5 w-5 text-primary" aria-hidden />
-            <span>StudyMind</span>
-          </Link>
+          <div className="flex items-center gap-6 min-w-0">
+            <Link to="/dashboard" className="flex items-center gap-2 font-semibold shrink-0">
+              <BookOpen className="h-5 w-5 text-primary" aria-hidden />
+              <span>StudyMind</span>
+            </Link>
+            <nav className="hidden sm:flex items-center gap-1 text-sm">
+              <NavLink to="/dashboard">Documents</NavLink>
+              <NavLink to="/planner">Planner</NavLink>
+              <NavLink to="/progress">Progress</NavLink>
+            </nav>
+          </div>
           <Button variant="ghost" size="sm" onClick={signOut} aria-label="Sign out">
             <LogOut className="h-4 w-4" />
             <span className="hidden sm:inline ml-2">Sign out</span>
           </Button>
         </div>
+        <nav className="sm:hidden border-t border-border/60 flex items-center justify-around text-sm">
+          <NavLink to="/dashboard">Documents</NavLink>
+          <NavLink to="/planner">Planner</NavLink>
+          <NavLink to="/progress">Progress</NavLink>
+        </nav>
       </header>
       <main className="mx-auto max-w-6xl px-4 py-6">
         <Outlet />
       </main>
     </div>
+  );
+}
+
+function NavLink({ to, children }: { to: "/dashboard" | "/planner" | "/progress"; children: React.ReactNode }) {
+  return (
+    <Link
+      to={to}
+      className="px-3 py-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+      activeProps={{ className: "px-3 py-2 rounded-md text-foreground bg-accent" }}
+    >
+      {children}
+    </Link>
   );
 }
 
