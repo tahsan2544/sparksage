@@ -18,6 +18,7 @@ import {
   type QuizQuestion,
   type Flashcard,
 } from "@/lib/documents.functions";
+import { logSession } from "@/lib/study.functions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -155,10 +156,12 @@ function SummaryPanel({ documentId }: { documentId: string }) {
 function QuizPanel({ documentId }: { documentId: string }) {
   const getFn = useServerFn(getLatestQuiz);
   const genFn = useServerFn(generateQuiz);
+  const logFn = useServerFn(logSession);
   const qc = useQueryClient();
   const [busy, setBusy] = useState(false);
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [revealed, setRevealed] = useState(false);
+  const [startedAt, setStartedAt] = useState<number | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["quiz", documentId],
@@ -169,6 +172,7 @@ function QuizPanel({ documentId }: { documentId: string }) {
     setBusy(true);
     setAnswers({});
     setRevealed(false);
+    setStartedAt(Date.now());
     try {
       await genFn({ data: { documentId, count: 6 } });
       qc.invalidateQueries({ queryKey: ["quiz", documentId] });
@@ -180,9 +184,29 @@ function QuizPanel({ documentId }: { documentId: string }) {
   }
 
   const questions = (data?.questions as QuizQuestion[] | undefined) ?? [];
+  const answered = Object.keys(answers).length;
   const score = revealed
     ? questions.reduce((acc, q, i) => acc + (answers[i] === q.answerIndex ? 1 : 0), 0)
     : 0;
+  const progressPct = questions.length ? Math.round((answered / questions.length) * 100) : 0;
+
+  async function submit() {
+    setRevealed(true);
+    const elapsed = startedAt ? Math.max(30, Math.round((Date.now() - startedAt) / 1000)) : questions.length * 30;
+    const correct = questions.reduce((acc, q, i) => acc + (answers[i] === q.answerIndex ? 1 : 0), 0);
+    try {
+      await logFn({
+        data: {
+          duration_seconds: Math.min(elapsed, 30 * 60),
+          document_id: documentId,
+          note: `Quiz: ${correct}/${questions.length}`,
+        },
+      });
+      qc.invalidateQueries({ queryKey: ["progress"] });
+    } catch {
+      // silent — quiz feedback still works even if logging fails
+    }
+  }
 
   return (
     <Card>
@@ -197,6 +221,19 @@ function QuizPanel({ documentId }: { documentId: string }) {
         {isLoading && <div className="h-24 rounded bg-muted animate-pulse" aria-hidden />}
         {!isLoading && !data && (
           <p className="text-sm text-muted-foreground">No quiz yet. Click Generate for questions.</p>
+        )}
+        {questions.length > 0 && !revealed && (
+          <div className="flex items-center gap-3">
+            <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
+              <div
+                className="h-full bg-[image:var(--gradient-primary)] transition-all"
+                style={{ width: `${progressPct}%` }}
+              />
+            </div>
+            <span className="text-xs text-muted-foreground tabular-nums">
+              {answered}/{questions.length}
+            </span>
+          </div>
         )}
         {questions.map((q, i) => (
           <div key={i} className="rounded-lg border border-border p-4">
@@ -244,22 +281,26 @@ function QuizPanel({ documentId }: { documentId: string }) {
         {questions.length > 0 && (
           <div className="flex items-center justify-between gap-3">
             {!revealed ? (
-              <Button
-                onClick={() => setRevealed(true)}
-                disabled={Object.keys(answers).length !== questions.length}
-              >
+              <Button onClick={submit} disabled={answered !== questions.length}>
                 Check answers
               </Button>
             ) : (
               <>
-                <p className="text-sm">
-                  Score: <span className="font-semibold">{score}</span> / {questions.length}
-                </p>
+                <div className="text-sm">
+                  Score:{" "}
+                  <span className="font-semibold text-foreground">
+                    {score} / {questions.length}
+                  </span>{" "}
+                  <span className="text-muted-foreground">
+                    ({Math.round((score / questions.length) * 100)}%) · logged to your progress
+                  </span>
+                </div>
                 <Button
                   variant="outline"
                   onClick={() => {
                     setAnswers({});
                     setRevealed(false);
+                    setStartedAt(Date.now());
                   }}
                 >
                   Try again
@@ -272,6 +313,7 @@ function QuizPanel({ documentId }: { documentId: string }) {
     </Card>
   );
 }
+
 
 // ---------- Flashcards ----------
 
