@@ -71,6 +71,7 @@ function Landing() {
         </div>
       </header>
 
+      <main>
       <section className="relative overflow-hidden">
         <div
           aria-hidden
