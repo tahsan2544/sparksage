@@ -2,7 +2,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
   getDocument,
@@ -357,10 +357,12 @@ function FlashcardsPanel({ documentId }: { documentId: string }) {
   }
 
   // Sync order when the deck first loads or its length changes.
-  if (cards.length > 0 && order.length !== cards.length) {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    setTimeout(() => resetOrder(false), 0);
-  }
+  useEffect(() => {
+    if (cards.length > 0 && order.length !== cards.length) {
+      resetOrder(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cards.length]);
 
   const activeIdx = order[pos];
   const card = activeIdx != null ? cards[activeIdx] : undefined;
