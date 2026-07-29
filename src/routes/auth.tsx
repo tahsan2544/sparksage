@@ -62,7 +62,7 @@ function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 bg-gradient-to-br from-background to-muted">
+    <main className="min-h-screen flex items-center justify-center px-4 bg-gradient-to-br from-background to-muted">
       <div className="w-full max-w-md">
         <Link to="/" className="flex items-center gap-2 font-semibold justify-center mb-6">
           <BookOpen className="h-6 w-6 text-primary" aria-hidden />
@@ -133,6 +133,6 @@ function AuthPage() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </main>
   );
 }
