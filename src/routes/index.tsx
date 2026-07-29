@@ -71,6 +71,7 @@ function Landing() {
         </div>
       </header>
 
+      <main>
       <section className="relative overflow-hidden">
         <div
           aria-hidden
@@ -118,6 +119,7 @@ function Landing() {
           </div>
         ))}
       </section>
+      </main>
 
       <footer className="border-t border-border">
         <div className="mx-auto max-w-6xl px-4 py-6 text-xs text-muted-foreground flex items-center justify-between">

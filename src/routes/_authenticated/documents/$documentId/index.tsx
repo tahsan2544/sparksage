@@ -2,7 +2,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
   getDocument,
@@ -22,7 +22,7 @@ import { logSession } from "@/lib/study.functions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Sparkles, MessageSquare, Plus, Trash2, ChevronLeft, RefreshCw } from "lucide-react";
+import { Sparkles, MessageSquare, Plus, Trash2, ChevronLeft, RefreshCw, Check, Repeat, Shuffle } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
 export const Route = createFileRoute("/_authenticated/documents/$documentId/")({
@@ -320,10 +320,16 @@ function QuizPanel({ documentId }: { documentId: string }) {
 function FlashcardsPanel({ documentId }: { documentId: string }) {
   const getFn = useServerFn(getLatestDeck);
   const genFn = useServerFn(generateFlashcards);
+  const logFn = useServerFn(logSession);
   const qc = useQueryClient();
   const [busy, setBusy] = useState(false);
-  const [idx, setIdx] = useState(0);
+  const [order, setOrder] = useState<number[]>([]);
+  const [pos, setPos] = useState(0);
   const [flipped, setFlipped] = useState(false);
+  const [known, setKnown] = useState<Set<number>>(new Set());
+  const [review, setReview] = useState<Set<number>>(new Set());
+  const [startedAt, setStartedAt] = useState<number | null>(null);
+  const [loggedRun, setLoggedRun] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ["deck", documentId],
@@ -331,21 +337,87 @@ function FlashcardsPanel({ documentId }: { documentId: string }) {
   });
 
   const cards = (data?.cards as Flashcard[] | undefined) ?? [];
-  const card = cards[idx];
+
+  // Initialize / reset order when deck changes.
+  function resetOrder(shuffle = false) {
+    const idxs = cards.map((_, i) => i);
+    if (shuffle) {
+      for (let i = idxs.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [idxs[i], idxs[j]] = [idxs[j], idxs[i]];
+      }
+    }
+    setOrder(idxs);
+    setPos(0);
+    setFlipped(false);
+    setKnown(new Set());
+    setReview(new Set());
+    setStartedAt(Date.now());
+    setLoggedRun(false);
+  }
+
+  // Sync order when the deck first loads or its length changes.
+  useEffect(() => {
+    if (cards.length > 0 && order.length !== cards.length) {
+      resetOrder(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cards.length]);
+
+  const activeIdx = order[pos];
+  const card = activeIdx != null ? cards[activeIdx] : undefined;
+  const total = cards.length;
+  const seen = known.size + review.size;
+  const progressPct = total ? Math.round((seen / total) * 100) : 0;
+  const done = total > 0 && seen === total;
 
   async function generate() {
     setBusy(true);
-    setIdx(0);
-    setFlipped(false);
     try {
       await genFn({ data: { documentId, count: 10 } });
       qc.invalidateQueries({ queryKey: ["deck", documentId] });
+      // resetOrder will re-run via the length-mismatch guard once new data lands.
+      setOrder([]);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to generate");
     } finally {
       setBusy(false);
     }
   }
+
+  function grade(good: boolean) {
+    if (activeIdx == null) return;
+    setKnown((k) => {
+      const next = new Set(k);
+      if (good) next.add(activeIdx);
+      else next.delete(activeIdx);
+      return next;
+    });
+    setReview((r) => {
+      const next = new Set(r);
+      if (!good) next.add(activeIdx);
+      else next.delete(activeIdx);
+      return next;
+    });
+    setFlipped(false);
+    setPos((p) => Math.min(p + 1, total));
+  }
+
+  // Log a study session once when the user finishes a pass.
+  useEffect(() => {
+    if (!done || loggedRun) return;
+    setLoggedRun(true);
+    const elapsed = startedAt ? Math.max(30, Math.round((Date.now() - startedAt) / 1000)) : total * 20;
+    logFn({
+      data: {
+        duration_seconds: Math.min(elapsed, 30 * 60),
+        document_id: documentId,
+        note: `Flashcards: ${known.size}/${total} known`,
+      },
+    })
+      .then(() => qc.invalidateQueries({ queryKey: ["progress"] }))
+      .catch(() => {});
+  }, [done, loggedRun, startedAt, total, known.size, documentId, logFn, qc]);
 
   return (
     <Card>
@@ -361,7 +433,22 @@ function FlashcardsPanel({ documentId }: { documentId: string }) {
         {!isLoading && !data && (
           <p className="text-sm text-muted-foreground">No flashcards yet. Click Generate to build a deck.</p>
         )}
-        {card && (
+
+        {total > 0 && (
+          <div className="flex items-center gap-3">
+            <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden" aria-hidden>
+              <div
+                className="h-full bg-[image:var(--gradient-primary)] transition-all"
+                style={{ width: `${progressPct}%` }}
+              />
+            </div>
+            <span className="text-xs text-muted-foreground tabular-nums">
+              {seen}/{total}
+            </span>
+          </div>
+        )}
+
+        {card && !done && (
           <>
             <button
               type="button"
@@ -370,31 +457,54 @@ function FlashcardsPanel({ documentId }: { documentId: string }) {
               aria-label={flipped ? "Show front" : "Show back"}
             >
               <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">
-                {flipped ? "Answer" : "Question"} · Card {idx + 1} of {cards.length}
+                {flipped ? "Answer" : "Question"} · Card {pos + 1} of {total}
               </p>
               <p className="text-lg font-medium whitespace-pre-wrap">{flipped ? card.back : card.front}</p>
               <p className="text-xs text-muted-foreground mt-4">Tap to flip</p>
             </button>
             <div className="flex items-center justify-between gap-2">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setIdx((i) => (i - 1 + cards.length) % cards.length);
-                  setFlipped(false);
-                }}
-              >
-                Previous
+              <Button variant="outline" onClick={() => grade(false)} aria-label="Mark for review">
+                <Repeat className="h-4 w-4 mr-2" /> Review again
               </Button>
-              <Button
-                onClick={() => {
-                  setIdx((i) => (i + 1) % cards.length);
-                  setFlipped(false);
-                }}
-              >
-                Next
+              <Button onClick={() => grade(true)} aria-label="Mark as known">
+                <Check className="h-4 w-4 mr-2" /> I knew it
               </Button>
             </div>
           </>
+        )}
+
+        {done && (
+          <div className="rounded-xl border border-border bg-muted/40 p-6 text-center space-y-3">
+            <p className="text-lg font-semibold">Deck complete</p>
+            <p className="text-sm text-muted-foreground">
+              You knew <span className="font-medium text-foreground">{known.size}</span> of {total}. Logged
+              to your progress.
+            </p>
+            <div className="flex items-center justify-center gap-2">
+              <Button variant="outline" onClick={() => resetOrder(false)}>
+                <RefreshCw className="h-4 w-4 mr-2" /> Restart
+              </Button>
+              {review.size > 0 && (
+                <Button
+                  onClick={() => {
+                    const idxs = Array.from(review);
+                    setOrder(idxs);
+                    setPos(0);
+                    setFlipped(false);
+                    setKnown(new Set());
+                    setReview(new Set());
+                    setStartedAt(Date.now());
+                    setLoggedRun(false);
+                  }}
+                >
+                  <Repeat className="h-4 w-4 mr-2" /> Review {review.size} again
+                </Button>
+              )}
+              <Button variant="outline" onClick={() => resetOrder(true)}>
+                <Shuffle className="h-4 w-4 mr-2" /> Shuffle
+              </Button>
+            </div>
+          </div>
         )}
       </CardContent>
     </Card>
