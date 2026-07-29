@@ -404,7 +404,8 @@ function FlashcardsPanel({ documentId }: { documentId: string }) {
   }
 
   // Log a study session once when the user finishes a pass.
-  if (done && !loggedRun) {
+  useEffect(() => {
+    if (!done || loggedRun) return;
     setLoggedRun(true);
     const elapsed = startedAt ? Math.max(30, Math.round((Date.now() - startedAt) / 1000)) : total * 20;
     logFn({
@@ -416,7 +417,7 @@ function FlashcardsPanel({ documentId }: { documentId: string }) {
     })
       .then(() => qc.invalidateQueries({ queryKey: ["progress"] }))
       .catch(() => {});
-  }
+  }, [done, loggedRun, startedAt, total, known.size, documentId, logFn, qc]);
 
   return (
     <Card>
