@@ -20,7 +20,7 @@ import { ChevronLeft, MessageSquare, Plus, Send, Trash2 } from "lucide-react";
 export const Route = createFileRoute("/_authenticated/documents/$documentId/chat/$threadId")({
   head: () => ({
     meta: [
-      { title: "Chat — StudyMind" },
+      { title: "Chat — SparkSage" },
       { name: "description", content: "Chat about your document with AI." },
     ],
   }),

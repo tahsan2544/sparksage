@@ -17,13 +17,13 @@ import {
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "StudyMind — Chat, summarize, and quiz your documents" },
+      { title: "SparkSage — Chat, summarize, and quiz your documents" },
       {
         name: "description",
         content:
-          "Upload any document and turn it into an AI chat, summary, quiz, and flashcards. Learn faster with StudyMind.",
+          "Upload any document and turn it into an AI chat, summary, quiz, and flashcards. Learn faster with SparkSage.",
       },
-      { property: "og:title", content: "StudyMind — AI study companion for your documents" },
+      { property: "og:title", content: "SparkSage — AI study companion for your documents" },
       {
         property: "og:description",
         content: "Chat with your documents, generate summaries, quizzes, and flashcards in seconds.",
@@ -59,7 +59,7 @@ function Landing() {
           <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[image:var(--gradient-primary)] text-primary-foreground shadow-[var(--shadow-elegant)]">
             <BookOpen className="h-4 w-4" aria-hidden />
           </span>
-          <span>StudyMind</span>
+          <span>SparkSage</span>
         </Link>
         <div className="flex items-center gap-2">
           <Link to="/auth">
@@ -89,7 +89,7 @@ function Landing() {
             </span>
           </h1>
           <p className="mt-6 text-lg text-muted-foreground max-w-2xl mx-auto">
-            Upload notes, papers, or textbooks. StudyMind chats with them, summarizes them, and generates
+            Upload notes, papers, or textbooks. SparkSage chats with them, summarizes them, and generates
             quizzes and flashcards — so you learn faster and retain more.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
@@ -123,7 +123,7 @@ function Landing() {
 
       <footer className="border-t border-border">
         <div className="mx-auto max-w-6xl px-4 py-6 text-xs text-muted-foreground flex items-center justify-between">
-          <span>© {new Date().getFullYear()} StudyMind</span>
+          <span>© {new Date().getFullYear()} SparkSage</span>
           <Link to="/auth" className="hover:text-foreground">Sign in →</Link>
         </div>
       </footer>

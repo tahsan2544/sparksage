@@ -13,8 +13,8 @@ import { lovable } from "@/integrations/lovable/index";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Sign in — StudyMind" },
-      { name: "description", content: "Sign in to StudyMind to chat with, summarize, and quiz your documents." },
+      { title: "Sign in — SparkSage" },
+      { name: "description", content: "Sign in to SparkSage to chat with, summarize, and quiz your documents." },
     ],
   }),
   component: AuthPage,
@@ -88,7 +88,7 @@ function AuthPage() {
       <div className="w-full max-w-md">
         <Link to="/" className="flex items-center gap-2 font-semibold justify-center mb-6">
           <Sparkles className="h-6 w-6 text-primary" aria-hidden />
-          <span className="text-lg">StudyMind</span>
+          <span className="text-lg">SparkSage</span>
         </Link>
         <Card>
           <CardHeader>

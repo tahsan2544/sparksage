@@ -28,7 +28,7 @@ import { formatDistanceToNow } from "date-fns";
 export const Route = createFileRoute("/_authenticated/documents/$documentId/")({
   head: ({ params }) => ({
     meta: [
-      { title: "Document — StudyMind" },
+      { title: "Document — SparkSage" },
       { name: "description", content: `Study workspace for document ${params.documentId}.` },
     ],
   }),

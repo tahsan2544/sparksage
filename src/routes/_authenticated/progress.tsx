@@ -24,7 +24,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 export const Route = createFileRoute("/_authenticated/progress")({
   head: () => ({
     meta: [
-      { title: "Your progress — StudyMind" },
+      { title: "Your progress — SparkSage" },
       { name: "description", content: "Track study time, streaks, and learning progress." },
     ],
   }),

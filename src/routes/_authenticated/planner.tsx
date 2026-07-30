@@ -26,7 +26,7 @@ import {
 export const Route = createFileRoute("/_authenticated/planner")({
   head: () => ({
     meta: [
-      { title: "Study planner — StudyMind" },
+      { title: "Study planner — SparkSage" },
       { name: "description", content: "Plan study goals, deadlines, and revision schedule." },
     ],
   }),
