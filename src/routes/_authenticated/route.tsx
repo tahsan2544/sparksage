@@ -4,8 +4,8 @@
 import { createFileRoute, Outlet, redirect, Link, useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { BookOpen, LogOut } from "lucide-react";
-import { useQueryClient } from "@tanstack/react-query";
+import { Sparkles, LogOut } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -17,9 +17,29 @@ export const Route = createFileRoute("/_authenticated")({
   component: AuthedLayout,
 });
 
+type NavTarget = "/dashboard" | "/planner" | "/progress" | "/settings" | "/admin";
+
 function AuthedLayout() {
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const { user } = Route.useRouteContext();
+
+  // Owners get an extra nav entry; students never see admin tools.
+  const { data: isOwner } = useQuery({
+    queryKey: ["is-owner", user.id],
+    queryFn: async () => {
+      const { data } = await supabase.rpc("has_role", { _user_id: user.id, _role: "owner" });
+      return Boolean(data);
+    },
+  });
+
+  const links: { to: NavTarget; label: string }[] = [
+    { to: "/dashboard", label: "Documents" },
+    { to: "/planner", label: "Planner" },
+    { to: "/progress", label: "Progress" },
+    { to: "/settings", label: "Settings" },
+    ...(isOwner ? ([{ to: "/admin", label: "Admin" }] as const) : []),
+  ];
 
   async function signOut() {
     await qc.cancelQueries();
@@ -31,16 +51,18 @@ function AuthedLayout() {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border sticky top-0 z-40 bg-background/80 backdrop-blur">
-        <div className="mx-auto max-w-6xl px-4 h-14 flex items-center justify-between gap-4">
+        <div className="mx-auto max-w-6xl px-4 h-16 flex items-center justify-between gap-4">
           <div className="flex items-center gap-6 min-w-0">
             <Link to="/dashboard" className="flex items-center gap-2 font-semibold shrink-0">
-              <BookOpen className="h-5 w-5 text-primary" aria-hidden />
-              <span>StudyMind</span>
+              <Sparkles className="h-5 w-5 text-primary" aria-hidden />
+              <span>SparkSage</span>
             </Link>
-            <nav className="hidden sm:flex items-center gap-1 text-sm">
-              <NavLink to="/dashboard">Documents</NavLink>
-              <NavLink to="/planner">Planner</NavLink>
-              <NavLink to="/progress">Progress</NavLink>
+            <nav aria-label="Main" className="hidden md:flex items-center gap-1 text-sm">
+              {links.map((l) => (
+                <NavLink key={l.to} to={l.to}>
+                  {l.label}
+                </NavLink>
+              ))}
             </nav>
           </div>
           <Button variant="ghost" size="sm" onClick={signOut} aria-label="Sign out">
@@ -48,28 +70,34 @@ function AuthedLayout() {
             <span className="hidden sm:inline ml-2">Sign out</span>
           </Button>
         </div>
-        <nav className="sm:hidden border-t border-border/60 flex items-center justify-around text-sm">
-          <NavLink to="/dashboard">Documents</NavLink>
-          <NavLink to="/planner">Planner</NavLink>
-          <NavLink to="/progress">Progress</NavLink>
+        <nav
+          aria-label="Main mobile"
+          className="md:hidden border-t border-border/60 flex items-center justify-around text-sm overflow-x-auto"
+        >
+          {links.map((l) => (
+            <NavLink key={l.to} to={l.to}>
+              {l.label}
+            </NavLink>
+          ))}
         </nav>
       </header>
-      <main className="mx-auto max-w-6xl px-4 py-6">
+      <main className="mx-auto max-w-6xl px-4 py-8">
         <Outlet />
       </main>
     </div>
   );
 }
 
-function NavLink({ to, children }: { to: "/dashboard" | "/planner" | "/progress"; children: React.ReactNode }) {
+function NavLink({ to, children }: { to: NavTarget; children: React.ReactNode }) {
   return (
     <Link
       to={to}
-      className="px-3 py-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-      activeProps={{ className: "px-3 py-2 rounded-md text-foreground bg-accent" }}
+      className="px-3 py-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      activeProps={{ className: "px-3 py-2 rounded-xl text-foreground bg-accent" }}
     >
       {children}
     </Link>
   );
 }
+
 

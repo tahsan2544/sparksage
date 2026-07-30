@@ -7,13 +7,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { toast } from "sonner";
-import { BookOpen } from "lucide-react";
+import { Sparkles } from "lucide-react";
+import { lovable } from "@/integrations/lovable/index";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Sign in — StudyMind" },
-      { name: "description", content: "Sign in to StudyMind to chat with, summarize, and quiz your documents." },
+      { title: "Sign in — SparkSage" },
+      { name: "description", content: "Sign in to SparkSage to chat with, summarize, and quiz your documents." },
     ],
   }),
   component: AuthPage,
@@ -26,6 +27,7 @@ function AuthPage() {
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   // If already signed in, skip the page.
   useEffect(() => {
@@ -33,6 +35,26 @@ function AuthPage() {
       if (data.user) navigate({ to: "/dashboard", replace: true });
     });
   }, [navigate]);
+
+  /** Managed Google OAuth — opens the provider and returns to the app origin. */
+  async function onGoogle() {
+    setGoogleLoading(true);
+    try {
+      const result = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: window.location.origin,
+      });
+      if (result.error) {
+        toast.error(result.error.message ?? "Google sign-in failed");
+        return;
+      }
+      if (result.redirected) return;
+      navigate({ to: "/dashboard", replace: true });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Google sign-in failed");
+    } finally {
+      setGoogleLoading(false);
+    }
+  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -65,8 +87,8 @@ function AuthPage() {
     <main className="min-h-screen flex items-center justify-center px-4 bg-gradient-to-br from-background to-muted">
       <div className="w-full max-w-md">
         <Link to="/" className="flex items-center gap-2 font-semibold justify-center mb-6">
-          <BookOpen className="h-6 w-6 text-primary" aria-hidden />
-          <span className="text-lg">StudyMind</span>
+          <Sparkles className="h-6 w-6 text-primary" aria-hidden />
+          <span className="text-lg">SparkSage</span>
         </Link>
         <Card>
           <CardHeader>
@@ -120,6 +142,24 @@ function AuthPage() {
                 {loading ? "Please wait…" : mode === "signin" ? "Sign in" : "Create account"}
               </Button>
             </form>
+
+            <div className="my-5 flex items-center gap-3" aria-hidden>
+              <span className="h-px flex-1 bg-border" />
+              <span className="text-xs uppercase tracking-wide text-muted-foreground">or</span>
+              <span className="h-px flex-1 bg-border" />
+            </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              disabled={googleLoading}
+              onClick={onGoogle}
+            >
+              <GoogleMark />
+              <span className="ml-2">{googleLoading ? "Connecting…" : "Continue with Google"}</span>
+            </Button>
+
             <p className="text-sm text-muted-foreground mt-4 text-center">
               {mode === "signin" ? "New here?" : "Already have an account?"}{" "}
               <button
@@ -134,5 +174,17 @@ function AuthPage() {
         </Card>
       </div>
     </main>
+  );
+}
+
+/** Google "G" mark, inlined so the button needs no network request. */
+function GoogleMark() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden focusable="false">
+      <path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.6l6.7-6.7C35.6 2.6 30.2 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.8 6.1C12.3 13.2 17.7 9.5 24 9.5z" />
+      <path fill="#4285F4" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.4c-.5 2.9-2.2 5.3-4.7 7l7.3 5.7c4.3-3.9 7.1-9.8 7.1-17.2z" />
+      <path fill="#FBBC05" d="M10.4 28.7a14.6 14.6 0 0 1 0-9.4l-7.8-6.1a24 24 0 0 0 0 21.6l7.8-6.1z" />
+      <path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.3-5.7c-2 1.4-4.7 2.3-8.6 2.3-6.3 0-11.7-3.7-13.6-9.1l-7.8 6.1C6.5 42.6 14.6 48 24 48z" />
+    </svg>
   );
 }

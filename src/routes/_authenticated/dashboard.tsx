@@ -36,7 +36,7 @@ import { formatDistanceToNow } from "date-fns";
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
-      { title: "Your documents — StudyMind" },
+      { title: "Your documents — SparkSage" },
       { name: "description", content: "All your uploaded documents in one place." },
     ],
   }),
@@ -225,7 +225,7 @@ function NewDocumentDialog() {
         <DialogHeader>
           <DialogTitle>Add a document</DialogTitle>
           <DialogDescription>
-            Paste text or upload a .txt / .md file. StudyMind will use it for chat, summaries, and quizzes.
+            Paste text or upload a .txt / .md file. SparkSage will use it for chat, summaries, and quizzes.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={onSubmit} className="space-y-4">

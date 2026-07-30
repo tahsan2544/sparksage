@@ -79,9 +79,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "StudyMind — AI study companion for your documents" },
+      { title: "SparkSage — AI study companion for your documents" },
       { name: "description", content: "Turn any document into an AI chat, summary, quiz, and flashcards." },
-      { property: "og:title", content: "StudyMind — AI study companion" },
+      { property: "og:title", content: "SparkSage — AI study companion" },
       { property: "og:description", content: "Chat with your documents; generate summaries, quizzes, and flashcards." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
