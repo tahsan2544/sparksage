@@ -224,10 +224,13 @@ export const listMembers = createServerFn({ method: "GET" })
     });
     if (!isOwner) throw new Error("Forbidden");
 
+    // Owner verified above; profiles are only readable by their owner under RLS,
+    // so the member directory needs the privileged client.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const [{ data: profiles }, { data: roles }, { data: subs }] = await Promise.all([
-      context.supabase.from("profiles").select("id, email, display_name, created_at"),
-      context.supabase.from("user_roles").select("user_id, role"),
-      context.supabase.from("user_subscriptions").select("user_id, plans(key)"),
+      supabaseAdmin.from("profiles").select("id, email, display_name, created_at"),
+      supabaseAdmin.from("user_roles").select("user_id, role"),
+      supabaseAdmin.from("user_subscriptions").select("user_id, plans(key)"),
     ]);
 
     const roleByUser = new Map((roles ?? []).map((r) => [r.user_id, r.role]));
