@@ -120,6 +120,24 @@ function AuthPage() {
                 {loading ? "Please wait…" : mode === "signin" ? "Sign in" : "Create account"}
               </Button>
             </form>
+
+            <div className="my-5 flex items-center gap-3" aria-hidden>
+              <span className="h-px flex-1 bg-border" />
+              <span className="text-xs uppercase tracking-wide text-muted-foreground">or</span>
+              <span className="h-px flex-1 bg-border" />
+            </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              disabled={googleLoading}
+              onClick={onGoogle}
+            >
+              <GoogleMark />
+              <span className="ml-2">{googleLoading ? "Connecting…" : "Continue with Google"}</span>
+            </Button>
+
             <p className="text-sm text-muted-foreground mt-4 text-center">
               {mode === "signin" ? "New here?" : "Already have an account?"}{" "}
               <button
