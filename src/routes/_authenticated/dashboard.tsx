@@ -1,277 +1,223 @@
-// Documents dashboard: list existing docs + create a new one.
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+// Warm study home: welcome, streak, quick actions, recent docs, upcoming tasks.
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState, useRef } from "react";
-import { toast } from "sonner";
-import { listDocuments, createDocument, deleteDocument } from "@/lib/documents.functions";
+import { formatDistanceToNow, format, parseISO, isPast, isToday } from "date-fns";
+import {
+  FileText,
+  Flame,
+  Timer,
+  Plus,
+  CalendarDays,
+  LineChart,
+  ArrowRight,
+  Sparkles,
+} from "lucide-react";
+
+import { listDocuments } from "@/lib/documents.functions";
+import { listGoals, getProgress } from "@/lib/study.functions";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { FileText, Plus, Trash2, Upload } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
-      { title: "Your documents — SparkSage" },
-      { name: "description", content: "All your uploaded documents in one place." },
+      { title: "Dashboard — SparkSage" },
+      { name: "description", content: "Your study home: streaks, recent documents and today's tasks." },
     ],
   }),
-  component: Dashboard,
+  component: DashboardHome,
 });
 
-function Dashboard() {
-  const listFn = useServerFn(listDocuments);
-  const { data, isLoading, error } = useQuery({
+const TIPS = [
+  "Short, daily sessions beat one long cram. Fifteen focused minutes counts.",
+  "Explain a topic out loud as if teaching it — gaps show up fast.",
+  "Review flashcards right before sleep; recall improves overnight.",
+  "Start with the hardest topic while your attention is freshest.",
+  "Close the tab you keep checking. Focus is a setting, not a mood.",
+];
+
+function DashboardHome() {
+  const docsFn = useServerFn(listDocuments);
+  const goalsFn = useServerFn(listGoals);
+  const progressFn = useServerFn(getProgress);
+
+  const { data: docs, isLoading: docsLoading } = useQuery({
     queryKey: ["documents"],
-    queryFn: () => listFn(),
+    queryFn: () => docsFn(),
   });
+  const { data: goals } = useQuery({ queryKey: ["study-goals"], queryFn: () => goalsFn() });
+  const { data: progress } = useQuery({ queryKey: ["progress"], queryFn: () => progressFn() });
+
+  const documents = (docs ?? []) as Array<{ id: string; title: string; updated_at: string }>;
+  const tasks = ((goals ?? []) as Array<{ id: string; title: string; due_date: string; completed: boolean }>)
+    .filter((g) => !g.completed)
+    .slice(0, 5);
+  const dueToday = tasks.filter(
+    (t) => isToday(parseISO(t.due_date)) || isPast(parseISO(t.due_date)),
+  ).length;
+
+  const tip = TIPS[new Date().getDate() % TIPS.length];
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
 
   return (
-    <div>
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Your documents</h1>
-          <p className="text-sm text-muted-foreground">Upload a document to chat with it and generate study material.</p>
-        </div>
-        <NewDocumentDialog />
+    <div className="space-y-8">
+      <header>
+        <h1 className="text-2xl font-bold tracking-tight">{greeting} 👋</h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          {dueToday > 0
+            ? `You have ${dueToday} task${dueToday === 1 ? "" : "s"} due today. Let's clear them.`
+            : "Nothing overdue. A great day to get ahead."}
+        </p>
+      </header>
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Stat
+          icon={<Flame className="h-4 w-4 text-primary" />}
+          label="Study streak"
+          value={progress ? `${progress.streak} day${progress.streak === 1 ? "" : "s"}` : "—"}
+        />
+        <Stat
+          icon={<Timer className="h-4 w-4 text-primary" />}
+          label="Focus (30d)"
+          value={progress ? formatMinutes(progress.totalMinutes) : "—"}
+        />
+        <Stat
+          icon={<FileText className="h-4 w-4 text-primary" />}
+          label="Documents"
+          value={progress ? String(progress.counts.documents) : String(documents.length)}
+        />
+        <Stat
+          icon={<CalendarDays className="h-4 w-4 text-primary" />}
+          label="Open tasks"
+          value={String(tasks.length)}
+        />
       </div>
 
-      {isLoading && <SkeletonGrid />}
-      {error && (
-        <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive">
-          Failed to load documents: {error instanceof Error ? error.message : "unknown error"}
-        </div>
-      )}
-      {!isLoading && !error && data && data.length === 0 && <EmptyState />}
-      {!isLoading && data && data.length > 0 && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {data.map((doc) => (
-            <DocumentCard key={doc.id} doc={doc} />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function SkeletonGrid() {
-  return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-hidden>
-      {[0, 1, 2].map((i) => (
-        <div key={i} className="h-32 rounded-xl border border-border bg-muted/40 animate-pulse" />
-      ))}
-    </div>
-  );
-}
-
-function EmptyState() {
-  return (
-    <div className="rounded-xl border border-dashed border-border p-10 text-center">
-      <FileText className="mx-auto h-8 w-8 text-muted-foreground mb-3" aria-hidden />
-      <h2 className="font-semibold text-lg">No documents yet</h2>
-      <p className="text-sm text-muted-foreground mt-1">Upload your first document to get started.</p>
-      <div className="mt-4 flex justify-center">
-        <NewDocumentDialog />
-      </div>
-    </div>
-  );
-}
-
-function DocumentCard({ doc }: { doc: { id: string; title: string; created_at: string; updated_at: string } }) {
-  const qc = useQueryClient();
-  const del = useServerFn(deleteDocument);
-
-  async function onDelete() {
-    try {
-      await del({ data: { id: doc.id } });
-      toast.success("Document deleted");
-      qc.invalidateQueries({ queryKey: ["documents"] });
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Delete failed");
-    }
-  }
-
-  return (
-    <Card className="group">
-      <CardHeader>
-        <CardTitle className="flex items-start justify-between gap-2 text-base">
-          <Link
-            to="/documents/$documentId"
-            params={{ documentId: doc.id }}
-            className="hover:underline min-w-0 truncate"
-          >
-            {doc.title}
+      <section aria-labelledby="quick-actions">
+        <h2 id="quick-actions" className="text-sm font-semibold uppercase tracking-wide text-muted-foreground mb-3">
+          Quick actions
+        </h2>
+        <div className="flex flex-wrap gap-2">
+          <Link to="/documents">
+            <Button size="sm">
+              <Plus className="h-4 w-4 mr-2" /> Upload document
+            </Button>
           </Link>
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="opacity-60 hover:opacity-100 shrink-0"
-                aria-label={`Delete ${doc.title}`}
+          <Link to="/planner">
+            <Button size="sm" variant="outline">
+              <CalendarDays className="h-4 w-4 mr-2" /> Plan a task
+            </Button>
+          </Link>
+          <Link to="/progress">
+            <Button size="sm" variant="outline">
+              <Timer className="h-4 w-4 mr-2" /> Start Pomodoro
+            </Button>
+          </Link>
+          <Link to="/progress">
+            <Button size="sm" variant="outline">
+              <LineChart className="h-4 w-4 mr-2" /> View progress
+            </Button>
+          </Link>
+        </div>
+      </section>
+
+      <div className="grid gap-6 lg:grid-cols-3">
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="text-base">Continue studying</CardTitle>
+            <CardDescription>Your most recently updated documents.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {docsLoading && <div className="h-24 rounded-xl bg-muted/40 animate-pulse" aria-hidden />}
+            {!docsLoading && documents.length === 0 && (
+              <div className="rounded-xl border border-dashed border-border p-8 text-center">
+                <FileText className="mx-auto h-7 w-7 text-muted-foreground mb-2" aria-hidden />
+                <p className="text-sm text-muted-foreground">No documents yet.</p>
+                <Link to="/documents" className="inline-block mt-3">
+                  <Button size="sm">
+                    <Plus className="h-4 w-4 mr-2" /> Add your first document
+                  </Button>
+                </Link>
+              </div>
+            )}
+            {documents.slice(0, 5).map((d) => (
+              <Link
+                key={d.id}
+                to="/documents/$documentId"
+                params={{ documentId: d.id }}
+                className="flex items-center justify-between gap-3 rounded-xl border border-border px-3 py-2.5 hover:bg-accent/50 transition-colors"
               >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Delete this document?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This will delete the document and all of its chat threads, summaries, quizzes, and flashcards.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={onDelete}>Delete</AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </CardTitle>
-        <CardDescription>Updated {formatDistanceToNow(new Date(doc.updated_at))} ago</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Link
-          to="/documents/$documentId"
-          params={{ documentId: doc.id }}
-          className="text-sm text-primary hover:underline"
-        >
-          Open →
-        </Link>
+                <span className="flex items-center gap-2 min-w-0">
+                  <FileText className="h-4 w-4 text-muted-foreground shrink-0" aria-hidden />
+                  <span className="truncate">{d.title}</span>
+                </span>
+                <span className="text-xs text-muted-foreground shrink-0">
+                  {formatDistanceToNow(new Date(d.updated_at))} ago
+                </span>
+              </Link>
+            ))}
+          </CardContent>
+        </Card>
+
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Upcoming tasks</CardTitle>
+              <CardDescription>From your study planner.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {tasks.length === 0 && (
+                <p className="text-sm text-muted-foreground">No open tasks. Add one from the planner.</p>
+              )}
+              {tasks.map((t) => (
+                <div key={t.id} className="rounded-xl border border-border px-3 py-2">
+                  <div className="text-sm font-medium truncate">{t.title}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {format(parseISO(t.due_date), "EEE, MMM d")}
+                  </div>
+                </div>
+              ))}
+              <Link to="/planner" className="inline-flex items-center gap-1 text-sm text-primary hover:underline">
+                Open planner <ArrowRight className="h-3 w-3" aria-hidden />
+              </Link>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-primary" aria-hidden /> Tip of the day
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">{tip}</p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+  return (
+    <Card>
+      <CardContent className="p-4">
+        <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-muted-foreground">
+          {icon}
+          <span>{label}</span>
+        </div>
+        <div className="mt-2 text-2xl font-semibold">{value}</div>
       </CardContent>
     </Card>
   );
 }
 
-function NewDocumentDialog() {
-  const [open, setOpen] = useState(false);
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-  const [loading, setLoading] = useState(false);
-  const fileRef = useRef<HTMLInputElement>(null);
-  const create = useServerFn(createDocument);
-  const qc = useQueryClient();
-  const navigate = useNavigate();
-
-  function onFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const f = e.target.files?.[0];
-    if (!f) return;
-    if (f.size > 2 * 1024 * 1024) {
-      toast.error("Text file must be under 2MB");
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = () => {
-      const text = String(reader.result || "");
-      setContent(text);
-      if (!title) setTitle(f.name.replace(/\.[^.]+$/, ""));
-    };
-    reader.readAsText(f);
-  }
-
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!title.trim() || !content.trim()) {
-      toast.error("Title and content are required");
-      return;
-    }
-    setLoading(true);
-    try {
-      const { id } = await create({ data: { title: title.trim(), content: content.trim() } });
-      toast.success("Document added");
-      qc.invalidateQueries({ queryKey: ["documents"] });
-      setOpen(false);
-      setTitle("");
-      setContent("");
-      navigate({ to: "/documents/$documentId", params: { documentId: id } });
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to create document");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" /> New document
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>Add a document</DialogTitle>
-          <DialogDescription>
-            Paste text or upload a .txt / .md file. SparkSage will use it for chat, summaries, and quizzes.
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={onSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="doc-title">Title</Label>
-            <Input
-              id="doc-title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Chapter 3 — Photosynthesis"
-              maxLength={200}
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="doc-content">Content</Label>
-              <Button type="button" variant="ghost" size="sm" onClick={() => fileRef.current?.click()}>
-                <Upload className="h-4 w-4 mr-2" /> Upload text file
-              </Button>
-              <input
-                ref={fileRef}
-                type="file"
-                accept=".txt,.md,text/plain,text/markdown"
-                onChange={onFile}
-                className="hidden"
-              />
-            </div>
-            <Textarea
-              id="doc-content"
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder="Paste your document text here…"
-              rows={12}
-              maxLength={200_000}
-              required
-            />
-            <p className="text-xs text-muted-foreground">{content.length.toLocaleString()} characters</p>
-          </div>
-          <DialogFooter>
-            <Button type="submit" disabled={loading}>
-              {loading ? "Saving…" : "Save document"}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
+function formatMinutes(minutes: number): string {
+  if (minutes < 60) return `${minutes} min`;
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return m === 0 ? `${h}h` : `${h}h ${m}m`;
 }

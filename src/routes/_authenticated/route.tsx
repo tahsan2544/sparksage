@@ -1,11 +1,16 @@
-// Gate for every protected route. `ssr: false` because the Supabase session
-// lives in localStorage and cannot be read on the server; without this, a
-// hard refresh on a protected page would loop through /auth.
-import { createFileRoute, Outlet, redirect, Link, useNavigate } from "@tanstack/react-router";
+// Gate + app shell for every protected route. `ssr: false` because the Supabase
+// session lives in localStorage and cannot be read on the server; without this,
+// a hard refresh on a protected page would loop through /auth.
+import { createFileRoute, Outlet, redirect, useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Sparkles, LogOut } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/app-sidebar";
+import { GlobalSearch } from "@/components/global-search";
+import { getPublicSiteData } from "@/lib/settings.functions";
+import { useServerFn } from "@tanstack/react-start";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -17,14 +22,13 @@ export const Route = createFileRoute("/_authenticated")({
   component: AuthedLayout,
 });
 
-type NavTarget = "/dashboard" | "/planner" | "/progress" | "/settings" | "/admin";
-
 function AuthedLayout() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const { user } = Route.useRouteContext();
+  const siteFn = useServerFn(getPublicSiteData);
 
-  // Owners get an extra nav entry; students never see admin tools.
+  // Owners get extra nav entries; students never see admin tools.
   const { data: isOwner } = useQuery({
     queryKey: ["is-owner", user.id],
     queryFn: async () => {
@@ -33,13 +37,10 @@ function AuthedLayout() {
     },
   });
 
-  const links: { to: NavTarget; label: string }[] = [
-    { to: "/dashboard", label: "Documents" },
-    { to: "/planner", label: "Planner" },
-    { to: "/progress", label: "Progress" },
-    { to: "/settings", label: "Settings" },
-    ...(isOwner ? ([{ to: "/admin", label: "Admin" }] as const) : []),
-  ];
+  // Branding + announcement come from the Owner-managed settings table.
+  const { data: site } = useQuery({ queryKey: ["site-data"], queryFn: () => siteFn() });
+  const appName = site?.settings.app_name || "SparkSage";
+  const announcement = site?.settings.announcement?.trim();
 
   async function signOut() {
     await qc.cancelQueries();
@@ -49,55 +50,38 @@ function AuthedLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border sticky top-0 z-40 bg-background/80 backdrop-blur">
-        <div className="mx-auto max-w-6xl px-4 h-16 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-6 min-w-0">
-            <Link to="/dashboard" className="flex items-center gap-2 font-semibold shrink-0">
-              <Sparkles className="h-5 w-5 text-primary" aria-hidden />
-              <span>SparkSage</span>
-            </Link>
-            <nav aria-label="Main" className="hidden md:flex items-center gap-1 text-sm">
-              {links.map((l) => (
-                <NavLink key={l.to} to={l.to}>
-                  {l.label}
-                </NavLink>
-              ))}
-            </nav>
-          </div>
-          <Button variant="ghost" size="sm" onClick={signOut} aria-label="Sign out">
-            <LogOut className="h-4 w-4" />
-            <span className="hidden sm:inline ml-2">Sign out</span>
-          </Button>
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full bg-background">
+        <AppSidebar isOwner={Boolean(isOwner)} appName={appName} />
+
+        <div className="flex-1 flex flex-col min-w-0">
+          <header className="h-16 border-b border-border sticky top-0 z-40 bg-background/80 backdrop-blur">
+            <div className="h-full px-4 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2 min-w-0">
+                <SidebarTrigger aria-label="Toggle sidebar" />
+                <span className="font-semibold truncate hidden sm:inline">{appName}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <GlobalSearch />
+                <Button variant="ghost" size="sm" onClick={signOut} aria-label="Sign out">
+                  <LogOut className="h-4 w-4" />
+                  <span className="hidden sm:inline ml-2">Sign out</span>
+                </Button>
+              </div>
+            </div>
+          </header>
+
+          {announcement && (
+            <div role="status" className="bg-accent/40 border-b border-border px-4 py-2 text-sm text-center">
+              {announcement}
+            </div>
+          )}
+
+          <main className="flex-1 mx-auto w-full max-w-6xl px-4 py-8">
+            <Outlet />
+          </main>
         </div>
-        <nav
-          aria-label="Main mobile"
-          className="md:hidden border-t border-border/60 flex items-center justify-around text-sm overflow-x-auto"
-        >
-          {links.map((l) => (
-            <NavLink key={l.to} to={l.to}>
-              {l.label}
-            </NavLink>
-          ))}
-        </nav>
-      </header>
-      <main className="mx-auto max-w-6xl px-4 py-8">
-        <Outlet />
-      </main>
-    </div>
+      </div>
+    </SidebarProvider>
   );
 }
-
-function NavLink({ to, children }: { to: NavTarget; children: React.ReactNode }) {
-  return (
-    <Link
-      to={to}
-      className="px-3 py-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-      activeProps={{ className: "px-3 py-2 rounded-xl text-foreground bg-accent" }}
-    >
-      {children}
-    </Link>
-  );
-}
-
-
