@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_settings: {
+        Row: {
+          created_at: string
+          description: string | null
+          group_name: string
+          id: string
+          is_private: boolean
+          key: string
+          label: string
+          sort_order: number
+          updated_at: string
+          value: string | null
+          value_type: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          group_name?: string
+          id?: string
+          is_private?: boolean
+          key: string
+          label: string
+          sort_order?: number
+          updated_at?: string
+          value?: string | null
+          value_type?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          group_name?: string
+          id?: string
+          is_private?: boolean
+          key?: string
+          label?: string
+          sort_order?: number
+          updated_at?: string
+          value?: string | null
+          value_type?: string
+        }
+        Relationships: []
+      }
       chat_messages: {
         Row: {
           content: string
