@@ -13,7 +13,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { getPublicSiteData } from "@/lib/settings.functions";
+import { getPublicSiteData, type SettingsMap, type PublicPlan } from "@/lib/settings.functions";
 import {
   ArrowRight,
   BookOpen,
