@@ -120,7 +120,7 @@ const FAQS = [
 ];
 
 function Landing() {
-  const { settings, plans } = Route.useLoaderData();
+  const { settings, plans } = Route.useLoaderData() as { settings: SettingsMap; plans: PublicPlan[] };
   const navigate = useNavigate();
 
   useEffect(() => {
