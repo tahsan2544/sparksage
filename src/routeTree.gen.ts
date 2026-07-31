@@ -13,6 +13,7 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedSiteSettingsRouteImport } from './routes/_authenticated/site-settings'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedProgressRouteImport } from './routes/_authenticated/progress'
 import { Route as AuthenticatedPlannerRouteImport } from './routes/_authenticated/planner'
@@ -41,6 +42,12 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedSiteSettingsRoute =
+  AuthenticatedSiteSettingsRouteImport.update({
+    id: '/site-settings',
+    path: '/site-settings',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -94,6 +101,7 @@ export interface FileRoutesByFullPath {
   '/planner': typeof AuthenticatedPlannerRoute
   '/progress': typeof AuthenticatedProgressRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/site-settings': typeof AuthenticatedSiteSettingsRoute
   '/documents/': typeof AuthenticatedDocumentsIndexRoute
   '/documents/$documentId/': typeof AuthenticatedDocumentsDocumentIdIndexRoute
   '/documents/$documentId/chat/$threadId': typeof AuthenticatedDocumentsDocumentIdChatThreadIdRoute
@@ -107,6 +115,7 @@ export interface FileRoutesByTo {
   '/planner': typeof AuthenticatedPlannerRoute
   '/progress': typeof AuthenticatedProgressRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/site-settings': typeof AuthenticatedSiteSettingsRoute
   '/documents': typeof AuthenticatedDocumentsIndexRoute
   '/documents/$documentId': typeof AuthenticatedDocumentsDocumentIdIndexRoute
   '/documents/$documentId/chat/$threadId': typeof AuthenticatedDocumentsDocumentIdChatThreadIdRoute
@@ -122,6 +131,7 @@ export interface FileRoutesById {
   '/_authenticated/planner': typeof AuthenticatedPlannerRoute
   '/_authenticated/progress': typeof AuthenticatedProgressRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/_authenticated/site-settings': typeof AuthenticatedSiteSettingsRoute
   '/_authenticated/documents/': typeof AuthenticatedDocumentsIndexRoute
   '/_authenticated/documents/$documentId/': typeof AuthenticatedDocumentsDocumentIdIndexRoute
   '/_authenticated/documents/$documentId/chat/$threadId': typeof AuthenticatedDocumentsDocumentIdChatThreadIdRoute
@@ -137,6 +147,7 @@ export interface FileRouteTypes {
     | '/planner'
     | '/progress'
     | '/settings'
+    | '/site-settings'
     | '/documents/'
     | '/documents/$documentId/'
     | '/documents/$documentId/chat/$threadId'
@@ -150,6 +161,7 @@ export interface FileRouteTypes {
     | '/planner'
     | '/progress'
     | '/settings'
+    | '/site-settings'
     | '/documents'
     | '/documents/$documentId'
     | '/documents/$documentId/chat/$threadId'
@@ -164,6 +176,7 @@ export interface FileRouteTypes {
     | '/_authenticated/planner'
     | '/_authenticated/progress'
     | '/_authenticated/settings'
+    | '/_authenticated/site-settings'
     | '/_authenticated/documents/'
     | '/_authenticated/documents/$documentId/'
     | '/_authenticated/documents/$documentId/chat/$threadId'
@@ -205,6 +218,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/site-settings': {
+      id: '/_authenticated/site-settings'
+      path: '/site-settings'
+      fullPath: '/site-settings'
+      preLoaderRoute: typeof AuthenticatedSiteSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/settings': {
       id: '/_authenticated/settings'
@@ -271,6 +291,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPlannerRoute: typeof AuthenticatedPlannerRoute
   AuthenticatedProgressRoute: typeof AuthenticatedProgressRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
+  AuthenticatedSiteSettingsRoute: typeof AuthenticatedSiteSettingsRoute
   AuthenticatedDocumentsIndexRoute: typeof AuthenticatedDocumentsIndexRoute
   AuthenticatedDocumentsDocumentIdIndexRoute: typeof AuthenticatedDocumentsDocumentIdIndexRoute
   AuthenticatedDocumentsDocumentIdChatThreadIdRoute: typeof AuthenticatedDocumentsDocumentIdChatThreadIdRoute
@@ -282,6 +303,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPlannerRoute: AuthenticatedPlannerRoute,
   AuthenticatedProgressRoute: AuthenticatedProgressRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
+  AuthenticatedSiteSettingsRoute: AuthenticatedSiteSettingsRoute,
   AuthenticatedDocumentsIndexRoute: AuthenticatedDocumentsIndexRoute,
   AuthenticatedDocumentsDocumentIdIndexRoute:
     AuthenticatedDocumentsDocumentIdIndexRoute,
