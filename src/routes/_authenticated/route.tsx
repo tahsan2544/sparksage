@@ -9,6 +9,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { GlobalSearch } from "@/components/global-search";
+import { FeedbackDialog } from "@/components/feedback-dialog";
+
 import { getPublicSiteData } from "@/lib/settings.functions";
 import { useServerFn } from "@tanstack/react-start";
 
