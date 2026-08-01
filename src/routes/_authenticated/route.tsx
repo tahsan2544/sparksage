@@ -63,6 +63,8 @@ function AuthedLayout() {
               </div>
               <div className="flex items-center gap-2">
                 <GlobalSearch />
+                <FeedbackDialog />
+
                 <Button variant="ghost" size="sm" onClick={signOut} aria-label="Sign out">
                   <LogOut className="h-4 w-4" />
                   <span className="hidden sm:inline ml-2">Sign out</span>
