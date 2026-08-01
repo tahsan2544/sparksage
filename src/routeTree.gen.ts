@@ -22,6 +22,7 @@ import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedOwnerRouteRouteImport } from './routes/_authenticated/owner/route'
 import { Route as AuthenticatedOwnerIndexRouteImport } from './routes/_authenticated/owner/index'
 import { Route as AuthenticatedDocumentsIndexRouteImport } from './routes/_authenticated/documents/index'
+import { Route as AuthenticatedOwnerFeatureAccessRouteImport } from './routes/_authenticated/owner/feature-access'
 import { Route as AuthenticatedDocumentsDocumentIdIndexRouteImport } from './routes/_authenticated/documents/$documentId/index'
 import { Route as AuthenticatedDocumentsDocumentIdChatThreadIdRouteImport } from './routes/_authenticated/documents/$documentId/chat/$threadId'
 
@@ -91,6 +92,12 @@ const AuthenticatedDocumentsIndexRoute =
     path: '/documents/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedOwnerFeatureAccessRoute =
+  AuthenticatedOwnerFeatureAccessRouteImport.update({
+    id: '/feature-access',
+    path: '/feature-access',
+    getParentRoute: () => AuthenticatedOwnerRouteRoute,
+  } as any)
 const AuthenticatedDocumentsDocumentIdIndexRoute =
   AuthenticatedDocumentsDocumentIdIndexRouteImport.update({
     id: '/documents/$documentId/',
@@ -115,6 +122,7 @@ export interface FileRoutesByFullPath {
   '/progress': typeof AuthenticatedProgressRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/site-settings': typeof AuthenticatedSiteSettingsRoute
+  '/owner/feature-access': typeof AuthenticatedOwnerFeatureAccessRoute
   '/documents/': typeof AuthenticatedDocumentsIndexRoute
   '/owner/': typeof AuthenticatedOwnerIndexRoute
   '/documents/$documentId/': typeof AuthenticatedDocumentsDocumentIdIndexRoute
@@ -130,6 +138,7 @@ export interface FileRoutesByTo {
   '/progress': typeof AuthenticatedProgressRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/site-settings': typeof AuthenticatedSiteSettingsRoute
+  '/owner/feature-access': typeof AuthenticatedOwnerFeatureAccessRoute
   '/documents': typeof AuthenticatedDocumentsIndexRoute
   '/owner': typeof AuthenticatedOwnerIndexRoute
   '/documents/$documentId': typeof AuthenticatedDocumentsDocumentIdIndexRoute
@@ -148,6 +157,7 @@ export interface FileRoutesById {
   '/_authenticated/progress': typeof AuthenticatedProgressRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/site-settings': typeof AuthenticatedSiteSettingsRoute
+  '/_authenticated/owner/feature-access': typeof AuthenticatedOwnerFeatureAccessRoute
   '/_authenticated/documents/': typeof AuthenticatedDocumentsIndexRoute
   '/_authenticated/owner/': typeof AuthenticatedOwnerIndexRoute
   '/_authenticated/documents/$documentId/': typeof AuthenticatedDocumentsDocumentIdIndexRoute
@@ -166,6 +176,7 @@ export interface FileRouteTypes {
     | '/progress'
     | '/settings'
     | '/site-settings'
+    | '/owner/feature-access'
     | '/documents/'
     | '/owner/'
     | '/documents/$documentId/'
@@ -181,6 +192,7 @@ export interface FileRouteTypes {
     | '/progress'
     | '/settings'
     | '/site-settings'
+    | '/owner/feature-access'
     | '/documents'
     | '/owner'
     | '/documents/$documentId'
@@ -198,6 +210,7 @@ export interface FileRouteTypes {
     | '/_authenticated/progress'
     | '/_authenticated/settings'
     | '/_authenticated/site-settings'
+    | '/_authenticated/owner/feature-access'
     | '/_authenticated/documents/'
     | '/_authenticated/owner/'
     | '/_authenticated/documents/$documentId/'
@@ -304,6 +317,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDocumentsIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/owner/feature-access': {
+      id: '/_authenticated/owner/feature-access'
+      path: '/feature-access'
+      fullPath: '/owner/feature-access'
+      preLoaderRoute: typeof AuthenticatedOwnerFeatureAccessRouteImport
+      parentRoute: typeof AuthenticatedOwnerRouteRoute
+    }
     '/_authenticated/documents/$documentId/': {
       id: '/_authenticated/documents/$documentId/'
       path: '/documents/$documentId'
@@ -322,11 +342,13 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedOwnerRouteRouteChildren {
+  AuthenticatedOwnerFeatureAccessRoute: typeof AuthenticatedOwnerFeatureAccessRoute
   AuthenticatedOwnerIndexRoute: typeof AuthenticatedOwnerIndexRoute
 }
 
 const AuthenticatedOwnerRouteRouteChildren: AuthenticatedOwnerRouteRouteChildren =
   {
+    AuthenticatedOwnerFeatureAccessRoute: AuthenticatedOwnerFeatureAccessRoute,
     AuthenticatedOwnerIndexRoute: AuthenticatedOwnerIndexRoute,
   }
 
