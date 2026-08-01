@@ -10,6 +10,9 @@ import {
   ShieldCheck,
   SlidersHorizontal,
   Sparkles,
+  Gauge,
+  Megaphone,
+  Inbox,
 } from "lucide-react";
 
 import {
@@ -32,6 +35,10 @@ export type NavTarget =
   | "/progress"
   | "/settings"
   | "/admin"
+  | "/owner"
+  | "/owner/feature-access"
+  | "/owner/announcements"
+  | "/owner/feedback"
   | "/site-settings";
 
 const studyItems: { title: string; url: NavTarget; icon: typeof FileText }[] = [
@@ -46,7 +53,11 @@ const accountItems: { title: string; url: NavTarget; icon: typeof FileText }[] =
 ];
 
 const ownerItems: { title: string; url: NavTarget; icon: typeof FileText }[] = [
-  { title: "Admin console", url: "/admin", icon: ShieldCheck },
+  { title: "Overview", url: "/owner", icon: Gauge },
+  { title: "Feature access", url: "/owner/feature-access", icon: SlidersHorizontal },
+  { title: "Announcements", url: "/owner/announcements", icon: Megaphone },
+  { title: "Feedback", url: "/owner/feedback", icon: Inbox },
+  { title: "Plans & members", url: "/admin", icon: ShieldCheck },
   { title: "Site settings", url: "/site-settings", icon: SlidersHorizontal },
 ];
 
