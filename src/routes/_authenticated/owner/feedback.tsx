@@ -68,7 +68,13 @@ function FeedbackPage() {
   const list = useQuery({ queryKey: ["owner-feedback"], queryFn: () => listFn() });
 
   const update = useMutation({
-    mutationFn: (v: Parameters<typeof updateFn>[0]["data"]) => updateFn({ data: v }),
+    mutationFn: (v: {
+      id: string;
+      status?: "new" | "in_progress" | "completed" | "declined";
+      isPinned?: boolean;
+      isArchived?: boolean;
+      reply?: string;
+    }) => updateFn({ data: v }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["owner-feedback"] }),
     onError: (e: Error) => toast.error(e.message),
   });
