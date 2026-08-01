@@ -19,7 +19,12 @@ import { Route as AuthenticatedProgressRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedPlannerRouteImport } from './routes/_authenticated/planner'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedOwnerRouteRouteImport } from './routes/_authenticated/owner/route'
+import { Route as AuthenticatedOwnerIndexRouteImport } from './routes/_authenticated/owner/index'
 import { Route as AuthenticatedDocumentsIndexRouteImport } from './routes/_authenticated/documents/index'
+import { Route as AuthenticatedOwnerFeedbackRouteImport } from './routes/_authenticated/owner/feedback'
+import { Route as AuthenticatedOwnerFeatureAccessRouteImport } from './routes/_authenticated/owner/feature-access'
+import { Route as AuthenticatedOwnerAnnouncementsRouteImport } from './routes/_authenticated/owner/announcements'
 import { Route as AuthenticatedDocumentsDocumentIdIndexRouteImport } from './routes/_authenticated/documents/$documentId/index'
 import { Route as AuthenticatedDocumentsDocumentIdChatThreadIdRouteImport } from './routes/_authenticated/documents/$documentId/chat/$threadId'
 
@@ -73,11 +78,39 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedOwnerRouteRoute = AuthenticatedOwnerRouteRouteImport.update({
+  id: '/owner',
+  path: '/owner',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedOwnerIndexRoute = AuthenticatedOwnerIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedOwnerRouteRoute,
+} as any)
 const AuthenticatedDocumentsIndexRoute =
   AuthenticatedDocumentsIndexRouteImport.update({
     id: '/documents/',
     path: '/documents/',
     getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedOwnerFeedbackRoute =
+  AuthenticatedOwnerFeedbackRouteImport.update({
+    id: '/feedback',
+    path: '/feedback',
+    getParentRoute: () => AuthenticatedOwnerRouteRoute,
+  } as any)
+const AuthenticatedOwnerFeatureAccessRoute =
+  AuthenticatedOwnerFeatureAccessRouteImport.update({
+    id: '/feature-access',
+    path: '/feature-access',
+    getParentRoute: () => AuthenticatedOwnerRouteRoute,
+  } as any)
+const AuthenticatedOwnerAnnouncementsRoute =
+  AuthenticatedOwnerAnnouncementsRouteImport.update({
+    id: '/announcements',
+    path: '/announcements',
+    getParentRoute: () => AuthenticatedOwnerRouteRoute,
   } as any)
 const AuthenticatedDocumentsDocumentIdIndexRoute =
   AuthenticatedDocumentsDocumentIdIndexRouteImport.update({
@@ -96,13 +129,18 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/owner': typeof AuthenticatedOwnerRouteRouteWithChildren
   '/admin': typeof AuthenticatedAdminRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/planner': typeof AuthenticatedPlannerRoute
   '/progress': typeof AuthenticatedProgressRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/site-settings': typeof AuthenticatedSiteSettingsRoute
+  '/owner/announcements': typeof AuthenticatedOwnerAnnouncementsRoute
+  '/owner/feature-access': typeof AuthenticatedOwnerFeatureAccessRoute
+  '/owner/feedback': typeof AuthenticatedOwnerFeedbackRoute
   '/documents/': typeof AuthenticatedDocumentsIndexRoute
+  '/owner/': typeof AuthenticatedOwnerIndexRoute
   '/documents/$documentId/': typeof AuthenticatedDocumentsDocumentIdIndexRoute
   '/documents/$documentId/chat/$threadId': typeof AuthenticatedDocumentsDocumentIdChatThreadIdRoute
 }
@@ -116,7 +154,11 @@ export interface FileRoutesByTo {
   '/progress': typeof AuthenticatedProgressRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/site-settings': typeof AuthenticatedSiteSettingsRoute
+  '/owner/announcements': typeof AuthenticatedOwnerAnnouncementsRoute
+  '/owner/feature-access': typeof AuthenticatedOwnerFeatureAccessRoute
+  '/owner/feedback': typeof AuthenticatedOwnerFeedbackRoute
   '/documents': typeof AuthenticatedDocumentsIndexRoute
+  '/owner': typeof AuthenticatedOwnerIndexRoute
   '/documents/$documentId': typeof AuthenticatedDocumentsDocumentIdIndexRoute
   '/documents/$documentId/chat/$threadId': typeof AuthenticatedDocumentsDocumentIdChatThreadIdRoute
 }
@@ -126,13 +168,18 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/_authenticated/owner': typeof AuthenticatedOwnerRouteRouteWithChildren
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/planner': typeof AuthenticatedPlannerRoute
   '/_authenticated/progress': typeof AuthenticatedProgressRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/site-settings': typeof AuthenticatedSiteSettingsRoute
+  '/_authenticated/owner/announcements': typeof AuthenticatedOwnerAnnouncementsRoute
+  '/_authenticated/owner/feature-access': typeof AuthenticatedOwnerFeatureAccessRoute
+  '/_authenticated/owner/feedback': typeof AuthenticatedOwnerFeedbackRoute
   '/_authenticated/documents/': typeof AuthenticatedDocumentsIndexRoute
+  '/_authenticated/owner/': typeof AuthenticatedOwnerIndexRoute
   '/_authenticated/documents/$documentId/': typeof AuthenticatedDocumentsDocumentIdIndexRoute
   '/_authenticated/documents/$documentId/chat/$threadId': typeof AuthenticatedDocumentsDocumentIdChatThreadIdRoute
 }
@@ -142,13 +189,18 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/sitemap.xml'
+    | '/owner'
     | '/admin'
     | '/dashboard'
     | '/planner'
     | '/progress'
     | '/settings'
     | '/site-settings'
+    | '/owner/announcements'
+    | '/owner/feature-access'
+    | '/owner/feedback'
     | '/documents/'
+    | '/owner/'
     | '/documents/$documentId/'
     | '/documents/$documentId/chat/$threadId'
   fileRoutesByTo: FileRoutesByTo
@@ -162,7 +214,11 @@ export interface FileRouteTypes {
     | '/progress'
     | '/settings'
     | '/site-settings'
+    | '/owner/announcements'
+    | '/owner/feature-access'
+    | '/owner/feedback'
     | '/documents'
+    | '/owner'
     | '/documents/$documentId'
     | '/documents/$documentId/chat/$threadId'
   id:
@@ -171,13 +227,18 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/sitemap.xml'
+    | '/_authenticated/owner'
     | '/_authenticated/admin'
     | '/_authenticated/dashboard'
     | '/_authenticated/planner'
     | '/_authenticated/progress'
     | '/_authenticated/settings'
     | '/_authenticated/site-settings'
+    | '/_authenticated/owner/announcements'
+    | '/_authenticated/owner/feature-access'
+    | '/_authenticated/owner/feedback'
     | '/_authenticated/documents/'
+    | '/_authenticated/owner/'
     | '/_authenticated/documents/$documentId/'
     | '/_authenticated/documents/$documentId/chat/$threadId'
   fileRoutesById: FileRoutesById
@@ -261,12 +322,47 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/owner': {
+      id: '/_authenticated/owner'
+      path: '/owner'
+      fullPath: '/owner'
+      preLoaderRoute: typeof AuthenticatedOwnerRouteRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/owner/': {
+      id: '/_authenticated/owner/'
+      path: '/'
+      fullPath: '/owner/'
+      preLoaderRoute: typeof AuthenticatedOwnerIndexRouteImport
+      parentRoute: typeof AuthenticatedOwnerRouteRoute
+    }
     '/_authenticated/documents/': {
       id: '/_authenticated/documents/'
       path: '/documents'
       fullPath: '/documents/'
       preLoaderRoute: typeof AuthenticatedDocumentsIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/owner/feedback': {
+      id: '/_authenticated/owner/feedback'
+      path: '/feedback'
+      fullPath: '/owner/feedback'
+      preLoaderRoute: typeof AuthenticatedOwnerFeedbackRouteImport
+      parentRoute: typeof AuthenticatedOwnerRouteRoute
+    }
+    '/_authenticated/owner/feature-access': {
+      id: '/_authenticated/owner/feature-access'
+      path: '/feature-access'
+      fullPath: '/owner/feature-access'
+      preLoaderRoute: typeof AuthenticatedOwnerFeatureAccessRouteImport
+      parentRoute: typeof AuthenticatedOwnerRouteRoute
+    }
+    '/_authenticated/owner/announcements': {
+      id: '/_authenticated/owner/announcements'
+      path: '/announcements'
+      fullPath: '/owner/announcements'
+      preLoaderRoute: typeof AuthenticatedOwnerAnnouncementsRouteImport
+      parentRoute: typeof AuthenticatedOwnerRouteRoute
     }
     '/_authenticated/documents/$documentId/': {
       id: '/_authenticated/documents/$documentId/'
@@ -285,7 +381,28 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedOwnerRouteRouteChildren {
+  AuthenticatedOwnerAnnouncementsRoute: typeof AuthenticatedOwnerAnnouncementsRoute
+  AuthenticatedOwnerFeatureAccessRoute: typeof AuthenticatedOwnerFeatureAccessRoute
+  AuthenticatedOwnerFeedbackRoute: typeof AuthenticatedOwnerFeedbackRoute
+  AuthenticatedOwnerIndexRoute: typeof AuthenticatedOwnerIndexRoute
+}
+
+const AuthenticatedOwnerRouteRouteChildren: AuthenticatedOwnerRouteRouteChildren =
+  {
+    AuthenticatedOwnerAnnouncementsRoute: AuthenticatedOwnerAnnouncementsRoute,
+    AuthenticatedOwnerFeatureAccessRoute: AuthenticatedOwnerFeatureAccessRoute,
+    AuthenticatedOwnerFeedbackRoute: AuthenticatedOwnerFeedbackRoute,
+    AuthenticatedOwnerIndexRoute: AuthenticatedOwnerIndexRoute,
+  }
+
+const AuthenticatedOwnerRouteRouteWithChildren =
+  AuthenticatedOwnerRouteRoute._addFileChildren(
+    AuthenticatedOwnerRouteRouteChildren,
+  )
+
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedOwnerRouteRoute: typeof AuthenticatedOwnerRouteRouteWithChildren
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedPlannerRoute: typeof AuthenticatedPlannerRoute
@@ -298,6 +415,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedOwnerRouteRoute: AuthenticatedOwnerRouteRouteWithChildren,
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedPlannerRoute: AuthenticatedPlannerRoute,
@@ -323,13 +441,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

@@ -14,6 +14,60 @@ export type Database = {
   }
   public: {
     Tables: {
+      announcements: {
+        Row: {
+          audience: string
+          button_text: string | null
+          button_url: string | null
+          created_at: string
+          created_by: string | null
+          expires_at: string | null
+          id: string
+          is_published: boolean
+          message: string
+          priority: string
+          publish_at: string
+          subtitle: string | null
+          title: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          audience?: string
+          button_text?: string | null
+          button_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          is_published?: boolean
+          message: string
+          priority?: string
+          publish_at?: string
+          subtitle?: string | null
+          title: string
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          audience?: string
+          button_text?: string | null
+          button_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          is_published?: boolean
+          message?: string
+          priority?: string
+          publish_at?: string
+          subtitle?: string | null
+          title?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       app_settings: {
         Row: {
           created_at: string
@@ -183,6 +237,63 @@ export type Database = {
           created_at?: string
           id?: string
           title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      feedback: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          is_archived: boolean
+          is_pinned: boolean
+          message: string
+          owner_reply: string | null
+          page_url: string | null
+          priority: string
+          rating: number | null
+          replied_at: string | null
+          status: string
+          subject: string
+          tags: string[]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          id?: string
+          is_archived?: boolean
+          is_pinned?: boolean
+          message: string
+          owner_reply?: string | null
+          page_url?: string | null
+          priority?: string
+          rating?: number | null
+          replied_at?: string | null
+          status?: string
+          subject: string
+          tags?: string[]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          is_archived?: boolean
+          is_pinned?: boolean
+          message?: string
+          owner_reply?: string | null
+          page_url?: string | null
+          priority?: string
+          rating?: number | null
+          replied_at?: string | null
+          status?: string
+          subject?: string
+          tags?: string[]
           updated_at?: string
           user_id?: string
         }
