@@ -397,14 +397,21 @@ export const updateFeedback = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertOwner(context);
-    const patch: Record<string, unknown> = {};
-    if (data.status !== undefined) patch["status"] = data.status;
-    if (data.priority !== undefined) patch["priority"] = data.priority;
-    if (data.isPinned !== undefined) patch["is_pinned"] = data.isPinned;
-    if (data.isArchived !== undefined) patch["is_archived"] = data.isArchived;
+    const patch: {
+      status?: string;
+      priority?: string;
+      is_pinned?: boolean;
+      is_archived?: boolean;
+      owner_reply?: string;
+      replied_at?: string;
+    } = {};
+    if (data.status !== undefined) patch.status = data.status;
+    if (data.priority !== undefined) patch.priority = data.priority;
+    if (data.isPinned !== undefined) patch.is_pinned = data.isPinned;
+    if (data.isArchived !== undefined) patch.is_archived = data.isArchived;
     if (data.reply !== undefined) {
-      patch["owner_reply"] = data.reply;
-      patch["replied_at"] = new Date().toISOString();
+      patch.owner_reply = data.reply;
+      patch.replied_at = new Date().toISOString();
     }
     if (Object.keys(patch).length === 0) return { ok: true };
 
