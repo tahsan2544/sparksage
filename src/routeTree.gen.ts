@@ -20,6 +20,7 @@ import { Route as AuthenticatedPlannerRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedOwnerRouteRouteImport } from './routes/_authenticated/owner/route'
+import { Route as AuthenticatedOwnerIndexRouteImport } from './routes/_authenticated/owner/index'
 import { Route as AuthenticatedDocumentsIndexRouteImport } from './routes/_authenticated/documents/index'
 import { Route as AuthenticatedDocumentsDocumentIdIndexRouteImport } from './routes/_authenticated/documents/$documentId/index'
 import { Route as AuthenticatedDocumentsDocumentIdChatThreadIdRouteImport } from './routes/_authenticated/documents/$documentId/chat/$threadId'
@@ -79,6 +80,11 @@ const AuthenticatedOwnerRouteRoute = AuthenticatedOwnerRouteRouteImport.update({
   path: '/owner',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedOwnerIndexRoute = AuthenticatedOwnerIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedOwnerRouteRoute,
+} as any)
 const AuthenticatedDocumentsIndexRoute =
   AuthenticatedDocumentsIndexRouteImport.update({
     id: '/documents/',
@@ -102,7 +108,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/owner': typeof AuthenticatedOwnerRouteRoute
+  '/owner': typeof AuthenticatedOwnerRouteRouteWithChildren
   '/admin': typeof AuthenticatedAdminRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/planner': typeof AuthenticatedPlannerRoute
@@ -110,6 +116,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AuthenticatedSettingsRoute
   '/site-settings': typeof AuthenticatedSiteSettingsRoute
   '/documents/': typeof AuthenticatedDocumentsIndexRoute
+  '/owner/': typeof AuthenticatedOwnerIndexRoute
   '/documents/$documentId/': typeof AuthenticatedDocumentsDocumentIdIndexRoute
   '/documents/$documentId/chat/$threadId': typeof AuthenticatedDocumentsDocumentIdChatThreadIdRoute
 }
@@ -117,7 +124,6 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/owner': typeof AuthenticatedOwnerRouteRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/planner': typeof AuthenticatedPlannerRoute
@@ -125,6 +131,7 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthenticatedSettingsRoute
   '/site-settings': typeof AuthenticatedSiteSettingsRoute
   '/documents': typeof AuthenticatedDocumentsIndexRoute
+  '/owner': typeof AuthenticatedOwnerIndexRoute
   '/documents/$documentId': typeof AuthenticatedDocumentsDocumentIdIndexRoute
   '/documents/$documentId/chat/$threadId': typeof AuthenticatedDocumentsDocumentIdChatThreadIdRoute
 }
@@ -134,7 +141,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/_authenticated/owner': typeof AuthenticatedOwnerRouteRoute
+  '/_authenticated/owner': typeof AuthenticatedOwnerRouteRouteWithChildren
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/planner': typeof AuthenticatedPlannerRoute
@@ -142,6 +149,7 @@ export interface FileRoutesById {
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/site-settings': typeof AuthenticatedSiteSettingsRoute
   '/_authenticated/documents/': typeof AuthenticatedDocumentsIndexRoute
+  '/_authenticated/owner/': typeof AuthenticatedOwnerIndexRoute
   '/_authenticated/documents/$documentId/': typeof AuthenticatedDocumentsDocumentIdIndexRoute
   '/_authenticated/documents/$documentId/chat/$threadId': typeof AuthenticatedDocumentsDocumentIdChatThreadIdRoute
 }
@@ -159,6 +167,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/site-settings'
     | '/documents/'
+    | '/owner/'
     | '/documents/$documentId/'
     | '/documents/$documentId/chat/$threadId'
   fileRoutesByTo: FileRoutesByTo
@@ -166,7 +175,6 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/sitemap.xml'
-    | '/owner'
     | '/admin'
     | '/dashboard'
     | '/planner'
@@ -174,6 +182,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/site-settings'
     | '/documents'
+    | '/owner'
     | '/documents/$documentId'
     | '/documents/$documentId/chat/$threadId'
   id:
@@ -190,6 +199,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings'
     | '/_authenticated/site-settings'
     | '/_authenticated/documents/'
+    | '/_authenticated/owner/'
     | '/_authenticated/documents/$documentId/'
     | '/_authenticated/documents/$documentId/chat/$threadId'
   fileRoutesById: FileRoutesById
@@ -280,6 +290,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOwnerRouteRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/owner/': {
+      id: '/_authenticated/owner/'
+      path: '/'
+      fullPath: '/owner/'
+      preLoaderRoute: typeof AuthenticatedOwnerIndexRouteImport
+      parentRoute: typeof AuthenticatedOwnerRouteRoute
+    }
     '/_authenticated/documents/': {
       id: '/_authenticated/documents/'
       path: '/documents'
@@ -304,8 +321,22 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedOwnerRouteRouteChildren {
+  AuthenticatedOwnerIndexRoute: typeof AuthenticatedOwnerIndexRoute
+}
+
+const AuthenticatedOwnerRouteRouteChildren: AuthenticatedOwnerRouteRouteChildren =
+  {
+    AuthenticatedOwnerIndexRoute: AuthenticatedOwnerIndexRoute,
+  }
+
+const AuthenticatedOwnerRouteRouteWithChildren =
+  AuthenticatedOwnerRouteRoute._addFileChildren(
+    AuthenticatedOwnerRouteRouteChildren,
+  )
+
 interface AuthenticatedRouteRouteChildren {
-  AuthenticatedOwnerRouteRoute: typeof AuthenticatedOwnerRouteRoute
+  AuthenticatedOwnerRouteRoute: typeof AuthenticatedOwnerRouteRouteWithChildren
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedPlannerRoute: typeof AuthenticatedPlannerRoute
@@ -318,7 +349,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
-  AuthenticatedOwnerRouteRoute: AuthenticatedOwnerRouteRoute,
+  AuthenticatedOwnerRouteRoute: AuthenticatedOwnerRouteRouteWithChildren,
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedPlannerRoute: AuthenticatedPlannerRoute,
