@@ -53,7 +53,7 @@ const LABELS: Record<string, string> = {
   translation: "Translation",
   priority_ai: "Priority AI",
   fast_queue: "Fast queue",
-  offline_mode: "Offline mode",
+  video_understanding: "Video understanding",
   cloud_backup: "Cloud backup",
   advanced_analytics: "Advanced analytics",
   export_pdf: "Export as PDF",
