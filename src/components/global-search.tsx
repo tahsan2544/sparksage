@@ -70,9 +70,21 @@ export function GlobalSearch() {
       </Button>
 
       <CommandDialog open={open} onOpenChange={setOpen}>
-        <CommandInput placeholder="Search documents, planner tasks…" />
+        <CommandInput placeholder="Search documents, planner tasks, pages…" />
         <CommandList>
           <CommandEmpty>No matches found.</CommandEmpty>
+          <CommandGroup heading="Go to">
+            <CommandItem
+              value="chat with sparksage ai tutor"
+              onSelect={() => {
+                setOpen(false);
+                navigate({ to: "/chat" });
+              }}
+            >
+              <MessagesSquare className="h-4 w-4 mr-2" aria-hidden />
+              Chat with SparkSage AI
+            </CommandItem>
+          </CommandGroup>
           {documents.length > 0 && (
             <CommandGroup heading="Documents">
               {documents.map((d) => (
