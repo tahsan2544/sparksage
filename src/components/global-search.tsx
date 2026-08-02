@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { FileText, CalendarDays, Search } from "lucide-react";
+import { FileText, CalendarDays, MessagesSquare, Search } from "lucide-react";
 
 import { listDocuments } from "@/lib/documents.functions";
 import { listGoals } from "@/lib/study.functions";
