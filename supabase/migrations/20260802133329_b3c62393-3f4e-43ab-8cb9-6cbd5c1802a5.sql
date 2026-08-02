@@ -1,0 +1,2 @@
+UPDATE public.plan_features SET feature_key = 'video_understanding' WHERE feature_key = 'offline_mode' AND NOT EXISTS (SELECT 1 FROM public.plan_features pf2 WHERE pf2.plan_id = plan_features.plan_id AND pf2.feature_key = 'video_understanding');
+DELETE FROM public.plan_features WHERE feature_key = 'offline_mode';

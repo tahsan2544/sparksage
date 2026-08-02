@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { FileText, CalendarDays, Search } from "lucide-react";
+import { FileText, CalendarDays, MessagesSquare, Search } from "lucide-react";
 
 import { listDocuments } from "@/lib/documents.functions";
 import { listGoals } from "@/lib/study.functions";
@@ -70,9 +70,21 @@ export function GlobalSearch() {
       </Button>
 
       <CommandDialog open={open} onOpenChange={setOpen}>
-        <CommandInput placeholder="Search documents, planner tasks…" />
+        <CommandInput placeholder="Search documents, planner tasks, pages…" />
         <CommandList>
           <CommandEmpty>No matches found.</CommandEmpty>
+          <CommandGroup heading="Go to">
+            <CommandItem
+              value="chat with sparksage ai tutor"
+              onSelect={() => {
+                setOpen(false);
+                navigate({ to: "/chat" });
+              }}
+            >
+              <MessagesSquare className="h-4 w-4 mr-2" aria-hidden />
+              Chat with SparkSage AI
+            </CommandItem>
+          </CommandGroup>
           {documents.length > 0 && (
             <CommandGroup heading="Documents">
               {documents.map((d) => (

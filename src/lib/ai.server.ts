@@ -3,7 +3,16 @@
 
 const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 
-export type ChatMessage = { role: "system" | "user" | "assistant"; content: string };
+/** A multimodal content block (image / file) as accepted by the gateway. */
+export type ContentPart =
+  | { type: "text"; text: string }
+  | { type: "image_url"; image_url: { url: string } }
+  | { type: "file"; file: { filename: string; file_data: string } };
+
+export type ChatMessage = {
+  role: "system" | "user" | "assistant";
+  content: string | ContentPart[];
+};
 
 interface CallOpts {
   messages: ChatMessage[];

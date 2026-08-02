@@ -26,6 +26,7 @@ import {
   Layers,
   LineChart,
   ListChecks,
+  MessagesSquare,
   Mic,
   NotebookPen,
   PlayCircle,
@@ -61,6 +62,11 @@ export const Route = createFileRoute("/")({
 
 const FEATURES = [
   { icon: Brain, title: "AI Tutor", body: "Ask anything and get answers grounded in your own documents." },
+  {
+    icon: MessagesSquare,
+    title: "Chat with SparkSage AI",
+    body: "Live tutor chat where you can attach documents, images and videos.",
+  },
   { icon: Layers, title: "Flashcards", body: "Auto-generated decks with flip review and mastery tracking." },
   { icon: ListChecks, title: "Quiz generator", body: "Practice quizzes with scoring, feedback and explanations." },
   { icon: NotebookPen, title: "Smart notes", body: "Turn long chapters into clean, structured revision notes." },
@@ -75,9 +81,9 @@ const FEATURES = [
 ];
 
 const STEPS = [
-  { icon: Upload, title: "Upload", body: "Drop in a PDF, DOCX, PPTX or plain text file." },
+  { icon: Upload, title: "Upload", body: "Drop in documents, images or videos — PDF, DOCX, PPTX, TXT, JPG, PNG, MP4 and more." },
   { icon: Sparkles, title: "Let AI read it", body: "SparkSage extracts structure, key concepts and terms." },
-  { icon: Brain, title: "Learn your way", body: "Chat, summarize, quiz yourself or drill flashcards." },
+  { icon: Brain, title: "Learn your way", body: "Chat live with the AI tutor, summarize, quiz yourself or drill flashcards." },
   { icon: LineChart, title: "Track and repeat", body: "Streaks and spaced review keep the knowledge in." },
 ];
 
@@ -102,7 +108,7 @@ const TESTIMONIALS = [
 const FAQS = [
   {
     q: "What file types can I upload?",
-    a: "PDF, DOCX, PPTX and plain text today, with image and handwriting support arriving through OCR.",
+    a: "Documents (PDF, DOCX, PPTX, TXT, MD, CSV), images (JPG, PNG, WEBP, HEIC) and videos (MP4, MOV, WEBM) — attach several at once in a single chat message.",
   },
   {
     q: "Does the AI make things up?",
@@ -117,6 +123,10 @@ const FAQS = [
     a: "Yes. You can ask for explanations in Bangla or English, and more languages are on the way.",
   },
   { q: "Is there a free plan?", a: "Yes — start free, and upgrade only when you need higher limits." },
+  {
+    q: "Do I need an internet connection?",
+    a: "Yes. SparkSage is fully cloud-based, so your material and the AI tutor are always available on any device with a connection.",
+  },
 ];
 
 function Landing() {
@@ -206,7 +216,7 @@ function Landing() {
           <SectionHeading
             eyebrow="Everything in one place"
             title="Built for the way students actually study"
-            body="Thirteen tools that turn passive reading into active learning."
+            body="A connected, cloud-based toolkit that turns passive reading into active learning."
           />
           <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {FEATURES.map(({ icon: Icon, title, body }) => (
@@ -270,7 +280,7 @@ function Landing() {
             <WorkflowCard
               icon={<Brain className="h-5 w-5" />}
               title="Learn actively"
-              points={["Ask the tutor questions", "Summarize in your own words", "Generate a quick quiz"]}
+              points={["Chat live with the AI tutor", "Summarize in your own words", "Generate a quick quiz"]}
             />
             <WorkflowCard
               icon={<Languages className="h-5 w-5" />}
@@ -304,7 +314,7 @@ function Landing() {
           <SectionHeading
             eyebrow="Pricing"
             title="Start free, upgrade when you need more"
-            body="Limits are set per plan and can change as SparkSage grows."
+            body="Every plan is fully cloud-based and syncs across your devices. Limits are set per plan and can change as SparkSage grows."
           />
           <div className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {plans.map((plan, i) => (
@@ -367,7 +377,7 @@ function Landing() {
         <section className="mx-auto max-w-4xl px-4 py-20 text-center">
           <h2 className="text-3xl font-bold tracking-tight">Your next study session starts here</h2>
           <p className="mt-3 text-muted-foreground">
-            Upload one document and see what {appName} can do in under a minute.
+            Upload one document, image or video and see what {appName} can do in under a minute.
           </p>
           <div className="mt-7 flex flex-wrap justify-center gap-3">
             <Link to="/auth">

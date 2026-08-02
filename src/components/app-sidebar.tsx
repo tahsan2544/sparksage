@@ -4,6 +4,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard,
   FileText,
+  MessagesSquare,
   CalendarDays,
   LineChart,
   Settings as SettingsIcon,
@@ -31,6 +32,7 @@ import {
 export type NavTarget =
   | "/dashboard"
   | "/documents"
+  | "/chat"
   | "/planner"
   | "/progress"
   | "/settings"
@@ -44,6 +46,7 @@ export type NavTarget =
 const studyItems: { title: string; url: NavTarget; icon: typeof FileText }[] = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Documents", url: "/documents", icon: FileText },
+  { title: "Chat with AI", url: "/chat", icon: MessagesSquare },
   { title: "Study planner", url: "/planner", icon: CalendarDays },
   { title: "Progress", url: "/progress", icon: LineChart },
 ];
