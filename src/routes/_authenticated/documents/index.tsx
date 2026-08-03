@@ -2,7 +2,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
 import { listDocuments, createDocument, deleteDocument } from "@/lib/documents.functions";
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { FileText, Plus, Trash2, Upload } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { consumePendingUpload, type PendingUpload } from "@/lib/pending-upload";
 
 export const Route = createFileRoute("/_authenticated/documents/")({
   head: () => ({
@@ -45,6 +46,33 @@ export const Route = createFileRoute("/_authenticated/documents/")({
 
 function Dashboard() {
   const listFn = useServerFn(listDocuments);
+  const create = useServerFn(createDocument);
+  const qc = useQueryClient();
+  const navigate = useNavigate();
+  // A file dropped on the landing page before signing up: finish it here.
+  const [pending, setPending] = useState<PendingUpload | null>(null);
+  const [processing, setProcessing] = useState<string | null>(null);
+
+  useEffect(() => {
+    const p = consumePendingUpload();
+    if (!p) return;
+    if (!p.content.trim()) {
+      // Format we cannot read in the browser — prefill the dialog instead.
+      setPending(p);
+      return;
+    }
+    setProcessing(p.fileName);
+    create({ data: { title: p.title.slice(0, 200), content: p.content.slice(0, 200_000) } })
+      .then(({ id }) => {
+        toast.success(`${p.fileName} is ready to study`);
+        qc.invalidateQueries({ queryKey: ["documents"] });
+        navigate({ to: "/documents/$documentId", params: { documentId: id } });
+      })
+      .catch((err: unknown) =>
+        toast.error(err instanceof Error ? err.message : "We couldn't process that file."),
+      )
+      .finally(() => setProcessing(null));
+  }, [create, navigate, qc]);
   const { data, isLoading, error } = useQuery({
     queryKey: ["documents"],
     queryFn: () => listFn(),
@@ -57,8 +85,21 @@ function Dashboard() {
           <h1 className="text-2xl font-bold tracking-tight">Your documents</h1>
           <p className="text-sm text-muted-foreground">Upload a document to chat with it and generate study material.</p>
         </div>
-        <NewDocumentDialog />
+        <NewDocumentDialog
+          pending={pending}
+          onPendingHandled={() => setPending(null)}
+        />
       </div>
+
+      {processing && (
+        <div className="mb-6 rounded-3xl border border-border bg-card p-4 text-sm">
+          <p className="font-medium">Processing {processing}…</p>
+          <p className="text-muted-foreground mt-1">Extracting text and getting it ready to study.</p>
+          <div className="mt-3 h-1.5 rounded-full bg-muted overflow-hidden">
+            <div className="h-full w-1/2 rounded-full bg-[image:var(--gradient-primary)] animate-pulse" />
+          </div>
+        </div>
+      )}
 
       {isLoading && <SkeletonGrid />}
       {error && (
@@ -166,7 +207,13 @@ function DocumentCard({ doc }: { doc: { id: string; title: string; created_at: s
   );
 }
 
-function NewDocumentDialog() {
+function NewDocumentDialog({
+  pending,
+  onPendingHandled,
+}: {
+  pending?: PendingUpload | null;
+  onPendingHandled?: () => void;
+} = {}) {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -175,6 +222,16 @@ function NewDocumentDialog() {
   const create = useServerFn(createDocument);
   const qc = useQueryClient();
   const navigate = useNavigate();
+
+  // A landing-page file we couldn't read: open prefilled so the student can
+  // paste the text (PDF/DOCX/PPTX text extraction happens client-side today).
+  useEffect(() => {
+    if (!pending) return;
+    setTitle(pending.title.slice(0, 200));
+    setOpen(true);
+    toast.info(`Paste the text from ${pending.fileName} to finish adding it.`);
+    onPendingHandled?.();
+  }, [pending, onPendingHandled]);
 
   function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
