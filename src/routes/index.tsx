@@ -442,22 +442,87 @@ function WorkflowCard({ icon, title, points }: { icon: React.ReactNode; title: s
   );
 }
 
-/** Looping mock of a document being uploaded and processed. */
+/**
+ * Interactive hero dropzone. Visitors can drop or pick any document here; the
+ * file is stashed locally and they're sent to sign-up, where the documents
+ * page finishes processing it.
+ */
 function UploadAnimation() {
   const stages = ["Uploading lecture-notes.pdf", "Extracting text", "Finding key concepts", "Ready to study"];
+  const navigate = useNavigate();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [dragging, setDragging] = useState(false);
+  const [picked, setPicked] = useState<string | null>(null);
+
+  function handleFile(file: File) {
+    if (file.size > 12 * 1024 * 1024) {
+      toast.error("Files must be under 12 MB.");
+      return;
+    }
+    setPicked(file.name);
+    const finish = (content: string) => {
+      savePendingUpload({
+        title: file.name.replace(/\.[^.]+$/, ""),
+        content,
+        fileName: file.name,
+      });
+      toast.success("Create your free account to finish processing this file.");
+      navigate({ to: "/auth" });
+    };
+
+    if (isTextLike(file)) {
+      const reader = new FileReader();
+      reader.onload = () => finish(String(reader.result || ""));
+      reader.onerror = () => finish("");
+      reader.readAsText(file);
+    } else {
+      finish("");
+    }
+  }
+
   return (
     <div className="rounded-3xl border border-border bg-card p-6 shadow-[var(--shadow-elegant)]">
-      <div className="rounded-2xl border-2 border-dashed border-border p-6 text-center">
-        <motion.div
+      <input
+        ref={inputRef}
+        type="file"
+        className="sr-only"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) handleFile(f);
+          e.target.value = "";
+        }}
+      />
+      <button
+        type="button"
+        onClick={() => inputRef.current?.click()}
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDragging(true);
+        }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDragging(false);
+          const f = e.dataTransfer.files?.[0];
+          if (f) handleFile(f);
+        }}
+        aria-label="Upload a document to start studying"
+        className={`w-full rounded-2xl border-2 border-dashed p-6 text-center transition-colors ${
+          dragging ? "border-primary bg-primary/5" : "border-border hover:border-primary/60"
+        }`}
+      >
+        <motion.span
           animate={{ y: [0, -6, 0] }}
           transition={{ repeat: Infinity, duration: 2.2, ease: "easeInOut" }}
           className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary"
         >
           <Upload className="h-6 w-6" aria-hidden />
-        </motion.div>
-        <p className="mt-3 text-sm font-medium">Drop your notes here</p>
-        <p className="text-xs text-muted-foreground">PDF, DOCX, PPTX or TXT</p>
-      </div>
+        </motion.span>
+        <span className="mt-3 block text-sm font-medium">{picked ?? "Drop your notes here"}</span>
+        <span className="block text-xs text-muted-foreground">
+          Any document, image or slide deck — click to browse
+        </span>
+      </button>
 
       <div className="mt-5 space-y-3" aria-hidden>
         {stages.map((label, i) => (
@@ -479,6 +544,7 @@ function UploadAnimation() {
     </div>
   );
 }
+
 
 function humanFeature(key: string): string {
   return key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
