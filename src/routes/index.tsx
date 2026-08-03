@@ -1,7 +1,7 @@
 // Public landing page. Content (name, hero copy, plans) comes from the
 // Owner-managed settings + plans tables so it can be changed without a deploy.
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
@@ -14,6 +14,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { getPublicSiteData, type SettingsMap, type PublicPlan } from "@/lib/settings.functions";
+import { isTextLike, savePendingUpload } from "@/lib/pending-upload";
 import {
   ArrowRight,
   BookOpen,
