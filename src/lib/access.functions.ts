@@ -262,3 +262,14 @@ export const setMemberPlan = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+/**
+ * Current usage vs. plan limits for the signed-in student, so the app can show
+ * meters like "3 of 5 uploads used". Mirrors the server-side enforcement.
+ */
+export const getUsage = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { usageSummary } = await import("@/lib/limits.server");
+    return usageSummary(context.supabase, context.userId);
+  });

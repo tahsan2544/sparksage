@@ -31,6 +31,9 @@ export const createDocument = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
+    const { enforceLimit } = await import("@/lib/limits.server");
+    await enforceLimit(context.supabase, context.userId, "documents");
+
     const { data: row, error } = await context.supabase
       .from("documents")
       .insert({ title: data.title, content: data.content, user_id: context.userId })
@@ -124,6 +127,9 @@ export const sendMessage = createServerFn({ method: "POST" })
     z.object({ threadId: uuid, content: z.string().trim().min(1).max(4000) }).parse(d),
   )
   .handler(async ({ data, context }) => {
+    const { enforceLimit, recordUsage } = await import("@/lib/limits.server");
+    await enforceLimit(context.supabase, context.userId, "ai_chat_messages_per_day");
+
     // Load thread + document (RLS scopes to caller).
     const { data: thread, error: tErr } = await context.supabase
       .from("chat_threads")
@@ -180,6 +186,7 @@ export const sendMessage = createServerFn({ method: "POST" })
       .select("id, role, content, created_at")
       .single();
     if (aErr) throw new Error(aErr.message);
+    await recordUsage(context.userId, "ai_chat_messages_per_day");
 
     // Auto-title on the first exchange.
     if ((history?.length ?? 0) === 0 && thread.title === "New chat") {
@@ -208,6 +215,9 @@ export const generateSummary = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ documentId: uuid }).parse(d))
   .handler(async ({ data, context }) => {
+    const { enforceLimit, recordUsage } = await import("@/lib/limits.server");
+    await enforceLimit(context.supabase, context.userId, "summaries_per_day");
+
     const { data: doc, error } = await context.supabase
       .from("documents")
       .select("title, content")
@@ -237,6 +247,7 @@ export const generateSummary = createServerFn({ method: "POST" })
         { onConflict: "document_id" },
       );
     if (upErr) throw new Error(upErr.message);
+    await recordUsage(context.userId, "summaries_per_day");
     return { content: summary };
   });
 
@@ -262,6 +273,9 @@ export const generateQuiz = createServerFn({ method: "POST" })
     z.object({ documentId: uuid, count: z.number().int().min(3).max(15).default(6) }).parse(d),
   )
   .handler(async ({ data, context }) => {
+    const { enforceLimit, recordUsage } = await import("@/lib/limits.server");
+    await enforceLimit(context.supabase, context.userId, "quiz_generations_per_day");
+
     const { data: doc, error } = await context.supabase
       .from("documents")
       .select("title, content")
@@ -293,6 +307,7 @@ export const generateQuiz = createServerFn({ method: "POST" })
       .select("id, questions, created_at")
       .single();
     if (iErr) throw new Error(iErr.message);
+    await recordUsage(context.userId, "quiz_generations_per_day");
     return row;
   });
 
@@ -318,6 +333,9 @@ export const generateFlashcards = createServerFn({ method: "POST" })
     z.object({ documentId: uuid, count: z.number().int().min(4).max(30).default(10) }).parse(d),
   )
   .handler(async ({ data, context }) => {
+    const { enforceLimit, recordUsage } = await import("@/lib/limits.server");
+    await enforceLimit(context.supabase, context.userId, "flashcard_generations_per_day");
+
     const { data: doc, error } = await context.supabase
       .from("documents")
       .select("title, content")
@@ -349,6 +367,7 @@ export const generateFlashcards = createServerFn({ method: "POST" })
       .select("id, cards, created_at")
       .single();
     if (iErr) throw new Error(iErr.message);
+    await recordUsage(context.userId, "flashcard_generations_per_day");
     return row;
   });
 

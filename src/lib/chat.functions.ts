@@ -39,10 +39,13 @@ cloud service, so always assume the student is online.`;
 export const askTutor = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => inputSchema.parse(d))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     if (!data.message && data.attachments.length === 0) {
       throw new Error("Write a message or attach a file first.");
     }
+
+    const { enforceLimit, recordUsage } = await import("@/lib/limits.server");
+    await enforceLimit(context.supabase, context.userId, "ai_chat_messages_per_day");
 
     const { callAI } = await import("@/lib/ai.server");
     const parts: import("@/lib/ai.server").ContentPart[] = [];
@@ -75,5 +78,6 @@ export const askTutor = createServerFn({ method: "POST" })
       ],
     });
 
+    await recordUsage(context.userId, "ai_chat_messages_per_day");
     return { answer };
   });
