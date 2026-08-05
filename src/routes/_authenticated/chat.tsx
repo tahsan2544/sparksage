@@ -37,7 +37,12 @@ const ACCEPT =
   "application/pdf,image/*,video/*,text/*";
 
 const MAX_FILES = 6;
-const MAX_BYTES = 12 * 1024 * 1024; // 12 MB per file
+// Attachments travel to the tutor as base64 (~33% larger than the raw file),
+// so keep them small — oversized bodies are rejected before they reach the
+// model and surface in the browser as a generic "failed to fetch".
+const MAX_BYTES = 4 * 1024 * 1024; // 4 MB per file
+const MAX_TOTAL_BYTES = 8 * 1024 * 1024; // 8 MB per message
+
 
 type Kind = "image" | "document" | "video" | "other";
 
