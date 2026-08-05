@@ -79,15 +79,20 @@ function publicClient() {
 export const getPublicSiteData = createServerFn({ method: "GET" }).handler(
   async (): Promise<{ settings: SettingsMap; plans: PublicPlan[] }> => {
     const supabase = publicClient();
+    // Plan limits are not readable by anonymous visitors (they describe how
+    // quotas are enforced), so the pricing table is assembled server-side with
+    // the privileged client and projected down to safe, public fields only.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const [{ data: settingRows }, { data: planRows }] = await Promise.all([
       supabase.from("app_settings").select("key, value").eq("is_private", false),
-      supabase
+      supabaseAdmin
         .from("plans")
         .select("key, name, description, price_cents, sort_order, plan_features(feature_key, max_usage, is_visible)")
         .eq("is_visible", true)
         .order("sort_order"),
     ]);
+
 
     const settings: SettingsMap = { ...SETTINGS_DEFAULTS };
     for (const row of settingRows ?? []) {
