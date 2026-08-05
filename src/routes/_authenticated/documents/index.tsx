@@ -233,21 +233,40 @@ function NewDocumentDialog({
     onPendingHandled?.();
   }, [pending, onPendingHandled]);
 
-  function onFile(e: React.ChangeEvent<HTMLInputElement>) {
+  /**
+   * Read any supported file into the content box: text, PDF, Word, PowerPoint
+   * (all parsed in the browser) or an image (transcribed by the AI tutor).
+   */
+  async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
+    e.target.value = "";
     if (!f) return;
-    if (f.size > 2 * 1024 * 1024) {
-      toast.error("Text file must be under 2MB");
+    if (f.size > 20 * 1024 * 1024) {
+      toast.error("Files must be under 20 MB.");
       return;
     }
-    const reader = new FileReader();
-    reader.onload = () => {
-      const text = String(reader.result || "");
-      setContent(text);
+    setReading(f.name);
+    try {
+      const result = await extractText(f);
+      let text = result.text;
+      if (result.kind === "image" && result.dataUrl) {
+        if (f.size > 5 * 1024 * 1024) throw new Error("Images must be under 5 MB to be transcribed.");
+        text = (await ocr({ data: { fileName: f.name, dataUrl: result.dataUrl } })).text;
+      }
+      if (!text.trim()) {
+        toast.error(`We couldn't find any text in ${f.name}. Try pasting it instead.`);
+        return;
+      }
+      setContent(text.slice(0, 200_000));
       if (!title) setTitle(f.name.replace(/\.[^.]+$/, ""));
-    };
-    reader.readAsText(f);
+      toast.success(`${f.name} is ready — review the text and save.`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : `Could not read ${f.name}.`);
+    } finally {
+      setReading(null);
+    }
   }
+
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
