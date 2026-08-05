@@ -107,11 +107,18 @@ function ChatWithAI() {
         return prev;
       }
       const accepted: Attachment[] = [];
+      let running = prev.reduce((sum, f) => sum + f.size, 0);
       for (const file of list.slice(0, room)) {
         if (file.size > MAX_BYTES) {
-          toast.error(`${file.name} is larger than 12 MB.`);
+          toast.error(`${file.name} is larger than 4 MB. Try a smaller file or split it up.`);
           continue;
         }
+        if (running + file.size > MAX_TOTAL_BYTES) {
+          toast.error("That's too much for one message — send up to 8 MB of files at a time.");
+          continue;
+        }
+        running += file.size;
+
         const kind = kindOf(file);
         const id = `${file.name}-${file.size}-${Math.random().toString(36).slice(2)}`;
         const att: Attachment = {
