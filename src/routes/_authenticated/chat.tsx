@@ -199,7 +199,16 @@ function ChatWithAI() {
       });
       setTurns((prev) => [...prev, { id: `a-${Date.now()}`, role: "assistant", content: answer }]);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "The tutor could not reply. Try again.");
+      // A network-layer failure (usually an oversized attachment payload)
+      // surfaces as "Failed to fetch"; give students something actionable.
+      const raw = err instanceof Error ? err.message : "";
+      const networkish = /failed to fetch|networkerror|load failed/i.test(raw);
+      toast.error(
+        networkish
+          ? "We couldn't reach the tutor. If you attached files, try fewer or smaller ones (under 4 MB each)."
+          : raw || "The tutor could not reply. Try again.",
+      );
+
       setTurns((prev) => prev.filter((t) => t.id !== userTurn.id));
       setInput(text);
     } finally {
