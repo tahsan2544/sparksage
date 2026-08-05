@@ -167,6 +167,7 @@ function Landing() {
           <a href="#faq" className="hover:text-foreground">FAQ</a>
         </nav>
         <div className="flex items-center gap-2">
+          <ThemeToggle />
           <Link to="/auth">
             <Button variant="ghost" size="sm">Sign in</Button>
           </Link>
@@ -455,30 +456,29 @@ function UploadAnimation() {
   const [dragging, setDragging] = useState(false);
   const [picked, setPicked] = useState<string | null>(null);
 
-  function handleFile(file: File) {
+  async function handleFile(file: File) {
     if (file.size > 12 * 1024 * 1024) {
       toast.error("Files must be under 12 MB.");
       return;
     }
     setPicked(file.name);
-    const finish = (content: string) => {
-      savePendingUpload({
-        title: file.name.replace(/\.[^.]+$/, ""),
-        content,
-        fileName: file.name,
-      });
-      toast.success("Create your free account to finish processing this file.");
-      navigate({ to: "/auth" });
-    };
 
-    if (isTextLike(file)) {
-      const reader = new FileReader();
-      reader.onload = () => finish(String(reader.result || ""));
-      reader.onerror = () => finish("");
-      reader.readAsText(file);
-    } else {
-      finish("");
+    // Text is pulled out of PDFs, Word docs and slide decks right here in the
+    // browser, so the student sees a finished document straight after signup.
+    let content = "";
+    try {
+      content = (await extractText(file)).text;
+    } catch {
+      content = "";
     }
+
+    savePendingUpload({
+      title: file.name.replace(/\.[^.]+$/, ""),
+      content,
+      fileName: file.name,
+    });
+    toast.success("Create your free account to finish processing this file.");
+    navigate({ to: "/auth" });
   }
 
   return (
