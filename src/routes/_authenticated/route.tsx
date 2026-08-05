@@ -10,6 +10,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { GlobalSearch } from "@/components/global-search";
 import { FeedbackDialog } from "@/components/feedback-dialog";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 import { getPublicSiteData } from "@/lib/settings.functions";
 import { useServerFn } from "@tanstack/react-start";
@@ -66,6 +67,7 @@ function AuthedLayout() {
               <div className="flex items-center gap-2">
                 <GlobalSearch />
                 <FeedbackDialog />
+                <ThemeToggle />
 
                 <Button variant="ghost" size="sm" onClick={signOut} aria-label="Sign out">
                   <LogOut className="h-4 w-4" />
