@@ -33,6 +33,8 @@ import {
 import { FileText, Plus, Trash2, Upload } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { consumePendingUpload, type PendingUpload } from "@/lib/pending-upload";
+import { extractText, DOCUMENT_ACCEPT } from "@/lib/extract-text";
+import { readImageText } from "@/lib/extract.functions";
 
 export const Route = createFileRoute("/_authenticated/documents/")({
   head: () => ({
@@ -218,8 +220,10 @@ function NewDocumentDialog({
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(false);
+  const [reading, setReading] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const create = useServerFn(createDocument);
+  const ocr = useServerFn(readImageText);
   const qc = useQueryClient();
   const navigate = useNavigate();
 
@@ -233,21 +237,40 @@ function NewDocumentDialog({
     onPendingHandled?.();
   }, [pending, onPendingHandled]);
 
-  function onFile(e: React.ChangeEvent<HTMLInputElement>) {
+  /**
+   * Read any supported file into the content box: text, PDF, Word, PowerPoint
+   * (all parsed in the browser) or an image (transcribed by the AI tutor).
+   */
+  async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
+    e.target.value = "";
     if (!f) return;
-    if (f.size > 2 * 1024 * 1024) {
-      toast.error("Text file must be under 2MB");
+    if (f.size > 20 * 1024 * 1024) {
+      toast.error("Files must be under 20 MB.");
       return;
     }
-    const reader = new FileReader();
-    reader.onload = () => {
-      const text = String(reader.result || "");
-      setContent(text);
+    setReading(f.name);
+    try {
+      const result = await extractText(f);
+      let text = result.text;
+      if (result.kind === "image" && result.dataUrl) {
+        if (f.size > 5 * 1024 * 1024) throw new Error("Images must be under 5 MB to be transcribed.");
+        text = (await ocr({ data: { fileName: f.name, dataUrl: result.dataUrl } })).text;
+      }
+      if (!text.trim()) {
+        toast.error(`We couldn't find any text in ${f.name}. Try pasting it instead.`);
+        return;
+      }
+      setContent(text.slice(0, 200_000));
       if (!title) setTitle(f.name.replace(/\.[^.]+$/, ""));
-    };
-    reader.readAsText(f);
+      toast.success(`${f.name} is ready — review the text and save.`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : `Could not read ${f.name}.`);
+    } finally {
+      setReading(null);
+    }
   }
+
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -282,7 +305,8 @@ function NewDocumentDialog({
         <DialogHeader>
           <DialogTitle>Add a document</DialogTitle>
           <DialogDescription>
-            Paste text or upload a .txt / .md file. SparkSage will use it for chat, summaries, and quizzes.
+            Paste text or upload a PDF, Word (.docx), PowerPoint (.pptx), text file or a photo of your notes.
+            SparkSage will use it for chat, summaries, quizzes and flashcards.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={onSubmit} className="space-y-4">
@@ -300,13 +324,13 @@ function NewDocumentDialog({
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label htmlFor="doc-content">Content</Label>
-              <Button type="button" variant="ghost" size="sm" onClick={() => fileRef.current?.click()}>
-                <Upload className="h-4 w-4 mr-2" /> Upload text file
+              <Button type="button" variant="ghost" size="sm" onClick={() => fileRef.current?.click()} disabled={Boolean(reading)}>
+                <Upload className="h-4 w-4 mr-2" /> {reading ? `Reading ${reading}…` : "Upload a file"}
               </Button>
               <input
                 ref={fileRef}
                 type="file"
-                accept=".txt,.md,text/plain,text/markdown"
+                accept={DOCUMENT_ACCEPT}
                 onChange={onFile}
                 className="hidden"
               />

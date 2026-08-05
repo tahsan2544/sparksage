@@ -37,7 +37,12 @@ const ACCEPT =
   "application/pdf,image/*,video/*,text/*";
 
 const MAX_FILES = 6;
-const MAX_BYTES = 12 * 1024 * 1024; // 12 MB per file
+// Attachments travel to the tutor as base64 (~33% larger than the raw file),
+// so keep them small — oversized bodies are rejected before they reach the
+// model and surface in the browser as a generic "failed to fetch".
+const MAX_BYTES = 4 * 1024 * 1024; // 4 MB per file
+const MAX_TOTAL_BYTES = 8 * 1024 * 1024; // 8 MB per message
+
 
 type Kind = "image" | "document" | "video" | "other";
 
@@ -102,11 +107,18 @@ function ChatWithAI() {
         return prev;
       }
       const accepted: Attachment[] = [];
+      let running = prev.reduce((sum, f) => sum + f.size, 0);
       for (const file of list.slice(0, room)) {
         if (file.size > MAX_BYTES) {
-          toast.error(`${file.name} is larger than 12 MB.`);
+          toast.error(`${file.name} is larger than 4 MB. Try a smaller file or split it up.`);
           continue;
         }
+        if (running + file.size > MAX_TOTAL_BYTES) {
+          toast.error("That's too much for one message — send up to 8 MB of files at a time.");
+          continue;
+        }
+        running += file.size;
+
         const kind = kindOf(file);
         const id = `${file.name}-${file.size}-${Math.random().toString(36).slice(2)}`;
         const att: Attachment = {
@@ -187,7 +199,16 @@ function ChatWithAI() {
       });
       setTurns((prev) => [...prev, { id: `a-${Date.now()}`, role: "assistant", content: answer }]);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "The tutor could not reply. Try again.");
+      // A network-layer failure (usually an oversized attachment payload)
+      // surfaces as "Failed to fetch"; give students something actionable.
+      const raw = err instanceof Error ? err.message : "";
+      const networkish = /failed to fetch|networkerror|load failed/i.test(raw);
+      toast.error(
+        networkish
+          ? "We couldn't reach the tutor. If you attached files, try fewer or smaller ones (under 4 MB each)."
+          : raw || "The tutor could not reply. Try again.",
+      );
+
       setTurns((prev) => prev.filter((t) => t.id !== userTurn.id));
       setInput(text);
     } finally {

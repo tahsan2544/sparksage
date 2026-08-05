@@ -14,7 +14,9 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { getPublicSiteData, type SettingsMap, type PublicPlan } from "@/lib/settings.functions";
-import { isTextLike, savePendingUpload } from "@/lib/pending-upload";
+import { savePendingUpload } from "@/lib/pending-upload";
+import { extractText, DOCUMENT_ACCEPT } from "@/lib/extract-text";
+import { ThemeToggle } from "@/components/theme-toggle";
 import {
   ArrowRight,
   BookOpen,
@@ -167,6 +169,7 @@ function Landing() {
           <a href="#faq" className="hover:text-foreground">FAQ</a>
         </nav>
         <div className="flex items-center gap-2">
+          <ThemeToggle />
           <Link to="/auth">
             <Button variant="ghost" size="sm">Sign in</Button>
           </Link>
@@ -314,8 +317,8 @@ function Landing() {
         <section id="pricing" className="mx-auto max-w-6xl px-4 py-20">
           <SectionHeading
             eyebrow="Pricing"
-            title="Start free, upgrade when you need more"
-            body="Every plan is fully cloud-based and syncs across your devices. Limits are set per plan and can change as SparkSage grows."
+            title="Free to start — no card, ever"
+            body="SparkSage doesn't take payments. Everyone starts on Free; when you need more room you simply request Pro from your settings and we grant it. Master, with everything unlimited, is handed out personally."
           />
           <div className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {plans.map((plan, i) => (
@@ -333,8 +336,7 @@ function Landing() {
                 <h3 className="font-semibold text-lg">{plan.name}</h3>
                 <p className="text-sm text-muted-foreground mt-1 min-h-10">{plan.description}</p>
                 <div className="mt-4 text-3xl font-bold">
-                  {plan.priceCents === 0 ? "Free" : `$${(plan.priceCents / 100).toFixed(2)}`}
-                  {plan.priceCents > 0 && <span className="text-sm font-normal text-muted-foreground">/mo</span>}
+                  {plan.key === "free" ? "Free" : "By request"}
                 </div>
                 <ul className="mt-5 space-y-2 text-sm">
                   {plan.features.map((f) => (
@@ -351,11 +353,33 @@ function Landing() {
                 </ul>
                 <Link to="/auth" className="block mt-6">
                   <Button className="w-full" variant={i === 1 ? "default" : "outline"}>
-                    {plan.priceCents === 0 ? "Start free" : `Choose ${plan.name}`}
+                    {plan.key === "free" ? "Start free" : `Request ${plan.name}`}
                   </Button>
                 </Link>
               </div>
             ))}
+
+            {/* Master is invite-only, so it is described rather than listed from the database. */}
+            <div className="rounded-3xl border border-dashed border-border bg-card p-6">
+              <h3 className="text-lg font-semibold">Master</h3>
+              <p className="mt-1 min-h-10 text-sm text-muted-foreground">
+                Everything unlimited. Granted personally by the SparkSage owner.
+              </p>
+              <div className="mt-4 text-3xl font-bold">Invite only</div>
+              <ul className="mt-5 space-y-2 text-sm">
+                <li className="flex items-start gap-2">
+                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />
+                  <span>Unlimited documents, tutor chats, quizzes and flashcards</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />
+                  <span>No daily caps of any kind</span>
+                </li>
+              </ul>
+              <Button className="mt-6 w-full" variant="outline" disabled>
+                Owner-granted
+              </Button>
+            </div>
           </div>
         </section>
 
@@ -455,30 +479,29 @@ function UploadAnimation() {
   const [dragging, setDragging] = useState(false);
   const [picked, setPicked] = useState<string | null>(null);
 
-  function handleFile(file: File) {
+  async function handleFile(file: File) {
     if (file.size > 12 * 1024 * 1024) {
       toast.error("Files must be under 12 MB.");
       return;
     }
     setPicked(file.name);
-    const finish = (content: string) => {
-      savePendingUpload({
-        title: file.name.replace(/\.[^.]+$/, ""),
-        content,
-        fileName: file.name,
-      });
-      toast.success("Create your free account to finish processing this file.");
-      navigate({ to: "/auth" });
-    };
 
-    if (isTextLike(file)) {
-      const reader = new FileReader();
-      reader.onload = () => finish(String(reader.result || ""));
-      reader.onerror = () => finish("");
-      reader.readAsText(file);
-    } else {
-      finish("");
+    // Text is pulled out of PDFs, Word docs and slide decks right here in the
+    // browser, so the student sees a finished document straight after signup.
+    let content = "";
+    try {
+      content = (await extractText(file)).text;
+    } catch {
+      content = "";
     }
+
+    savePendingUpload({
+      title: file.name.replace(/\.[^.]+$/, ""),
+      content,
+      fileName: file.name,
+    });
+    toast.success("Create your free account to finish processing this file.");
+    navigate({ to: "/auth" });
   }
 
   return (
@@ -486,6 +509,7 @@ function UploadAnimation() {
       <input
         ref={inputRef}
         type="file"
+        accept={DOCUMENT_ACCEPT}
         className="sr-only"
         onChange={(e) => {
           const f = e.target.files?.[0];

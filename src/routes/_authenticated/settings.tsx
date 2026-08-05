@@ -14,6 +14,7 @@ import {
   updateProfile,
   claimOwnership,
 } from "@/lib/access.functions";
+import { getMyProRequest, requestPro } from "@/lib/pro.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -192,15 +193,19 @@ function SettingsPage() {
                   </div>
                   <p className="mt-1 text-sm text-muted-foreground">{p.description}</p>
                   <p className="mt-4 text-2xl font-semibold">
-                    {p.price_cents === 0 ? "Free" : `$${(p.price_cents / 100).toFixed(2)}`}
-                    {p.price_cents > 0 && <span className="text-sm font-normal text-muted-foreground">/mo</span>}
+                    {p.key === "free" ? "Free" : "By request"}
                   </p>
+
                 </div>
               );
             })}
           </div>
         </CardContent>
       </Card>
+
+      {acct.role !== "owner" && <UpgradeCard planKey={acct.plan?.key ?? "free"} />}
+
+
 
       {acct.role === "owner" ? (
         <Card>
@@ -232,5 +237,82 @@ function SettingsPage() {
         </Card>
       ) : null}
     </motion.div>
+  );
+}
+
+/**
+ * Ask the Owner for more capacity. SparkSage does not take payments — the
+ * Owner reviews requests in their inbox and grants Pro (or Master) by hand.
+ */
+function UpgradeCard({ planKey }: { planKey: string }) {
+  const qc = useQueryClient();
+  const myRequestFn = useServerFn(getMyProRequest);
+  const requestFn = useServerFn(requestPro);
+  const [message, setMessage] = useState("");
+
+  const request = useQuery({ queryKey: ["my-pro-request"], queryFn: () => myRequestFn() });
+
+  const send = useMutation({
+    mutationFn: () => requestFn({ data: { message: message.trim() || undefined } }),
+    onSuccess: () => {
+      toast.success("Request sent — the Owner will review it shortly.");
+      setMessage("");
+      qc.invalidateQueries({ queryKey: ["my-pro-request"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  if (planKey === "master") return null;
+
+  const current = request.data;
+  const pending = current?.status === "pending";
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Crown className="h-5 w-5 text-primary" aria-hidden /> Need more room?
+        </CardTitle>
+        <CardDescription>
+          Pro unlocks much higher daily limits. There's nothing to pay — just tell us how you study and the Owner
+          will review your request.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {current && (
+          <div className="rounded-2xl bg-muted/60 px-4 py-3 text-sm">
+            <p className="font-medium">
+              {pending
+                ? "Your request is waiting for review."
+                : current.status === "approved"
+                  ? "Your last request was approved 🎉"
+                  : "Your last request was declined."}
+            </p>
+            {current.ownerNote && <p className="mt-1 text-muted-foreground">Owner note: {current.ownerNote}</p>}
+          </div>
+        )}
+
+        {!pending && planKey !== "pro" && (
+          <div className="grid gap-2 sm:max-w-lg">
+            <Label htmlFor="upgrade-message">Why do you need Pro? (optional)</Label>
+            <Input
+              id="upgrade-message"
+              value={message}
+              maxLength={1000}
+              placeholder="I'm revising for finals and hit my daily limit."
+              onChange={(e) => setMessage(e.target.value)}
+            />
+          </div>
+        )}
+
+        {planKey === "pro" ? (
+          <p className="text-sm text-muted-foreground">You're on Pro. Contact the Owner if you need unlimited access.</p>
+        ) : (
+          <Button onClick={() => send.mutate()} disabled={send.isPending || pending || request.isLoading}>
+            {pending ? "Request pending" : send.isPending ? "Sending…" : "Request Pro access"}
+          </Button>
+        )}
+      </CardContent>
+    </Card>
   );
 }

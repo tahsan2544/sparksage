@@ -8,12 +8,14 @@ import { cn } from "@/lib/utils";
 
 const TABS = [
   { to: "/owner", label: "Overview" },
+  { to: "/owner/requests", label: "Upgrade requests" },
   { to: "/owner/feature-access", label: "Feature access" },
   { to: "/owner/announcements", label: "Announcements" },
   { to: "/owner/feedback", label: "Feedback" },
   { to: "/admin", label: "Plans & members" },
   { to: "/site-settings", label: "Settings" },
 ] as const;
+
 
 export const Route = createFileRoute("/_authenticated/owner")({
   ssr: false,
