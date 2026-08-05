@@ -33,6 +33,8 @@ import {
 import { FileText, Plus, Trash2, Upload } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { consumePendingUpload, type PendingUpload } from "@/lib/pending-upload";
+import { extractText, DOCUMENT_ACCEPT } from "@/lib/extract-text";
+import { readImageText } from "@/lib/extract.functions";
 
 export const Route = createFileRoute("/_authenticated/documents/")({
   head: () => ({
@@ -218,8 +220,10 @@ function NewDocumentDialog({
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(false);
+  const [reading, setReading] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const create = useServerFn(createDocument);
+  const ocr = useServerFn(readImageText);
   const qc = useQueryClient();
   const navigate = useNavigate();
 
@@ -301,7 +305,8 @@ function NewDocumentDialog({
         <DialogHeader>
           <DialogTitle>Add a document</DialogTitle>
           <DialogDescription>
-            Paste text or upload a .txt / .md file. SparkSage will use it for chat, summaries, and quizzes.
+            Paste text or upload a PDF, Word (.docx), PowerPoint (.pptx), text file or a photo of your notes.
+            SparkSage will use it for chat, summaries, quizzes and flashcards.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={onSubmit} className="space-y-4">
@@ -319,13 +324,13 @@ function NewDocumentDialog({
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label htmlFor="doc-content">Content</Label>
-              <Button type="button" variant="ghost" size="sm" onClick={() => fileRef.current?.click()}>
-                <Upload className="h-4 w-4 mr-2" /> Upload text file
+              <Button type="button" variant="ghost" size="sm" onClick={() => fileRef.current?.click()} disabled={Boolean(reading)}>
+                <Upload className="h-4 w-4 mr-2" /> {reading ? `Reading ${reading}…` : "Upload a file"}
               </Button>
               <input
                 ref={fileRef}
                 type="file"
-                accept=".txt,.md,text/plain,text/markdown"
+                accept={DOCUMENT_ACCEPT}
                 onChange={onFile}
                 className="hidden"
               />
