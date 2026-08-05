@@ -69,13 +69,16 @@ async function extractPdf(file: File): Promise<string> {
 }
 
 async function extractDocx(file: File): Promise<string> {
-  const mammoth = await import("mammoth/mammoth.browser");
-  const arrayBuffer = await file.arrayBuffer();
-  const { value } = await (mammoth as unknown as {
+  const mammoth = (await import(
+    /* @vite-ignore */ "mammoth/mammoth.browser"
+  )) as unknown as {
     extractRawText: (o: { arrayBuffer: ArrayBuffer }) => Promise<{ value: string }>;
-  }).extractRawText({ arrayBuffer });
+  };
+  const arrayBuffer = await file.arrayBuffer();
+  const { value } = await mammoth.extractRawText({ arrayBuffer });
   return value.trim();
 }
+
 
 async function extractPptx(file: File): Promise<string> {
   const JSZip = (await import("jszip")).default;
