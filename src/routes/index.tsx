@@ -14,7 +14,9 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { getPublicSiteData, type SettingsMap, type PublicPlan } from "@/lib/settings.functions";
-import { isTextLike, savePendingUpload } from "@/lib/pending-upload";
+import { savePendingUpload } from "@/lib/pending-upload";
+import { extractText, DOCUMENT_ACCEPT } from "@/lib/extract-text";
+import { ThemeToggle } from "@/components/theme-toggle";
 import {
   ArrowRight,
   BookOpen,
@@ -486,6 +488,7 @@ function UploadAnimation() {
       <input
         ref={inputRef}
         type="file"
+        accept={DOCUMENT_ACCEPT}
         className="sr-only"
         onChange={(e) => {
           const f = e.target.files?.[0];
