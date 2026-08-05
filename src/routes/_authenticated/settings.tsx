@@ -193,9 +193,9 @@ function SettingsPage() {
                   </div>
                   <p className="mt-1 text-sm text-muted-foreground">{p.description}</p>
                   <p className="mt-4 text-2xl font-semibold">
-                    {p.price_cents === 0 ? "Free" : `$${(p.price_cents / 100).toFixed(2)}`}
-                    {p.price_cents > 0 && <span className="text-sm font-normal text-muted-foreground">/mo</span>}
+                    {p.key === "free" ? "Free" : "By request"}
                   </p>
+
                 </div>
               );
             })}
