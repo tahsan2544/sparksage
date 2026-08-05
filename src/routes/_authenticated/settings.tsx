@@ -202,6 +202,10 @@ function SettingsPage() {
         </CardContent>
       </Card>
 
+      {acct.role !== "owner" && <UpgradeCard planKey={acct.plan?.key ?? "free"} />}
+
+
+
       {acct.role === "owner" ? (
         <Card>
           <CardHeader>
