@@ -23,6 +23,7 @@ import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedOwnerRouteRouteImport } from './routes/_authenticated/owner/route'
 import { Route as AuthenticatedOwnerIndexRouteImport } from './routes/_authenticated/owner/index'
 import { Route as AuthenticatedDocumentsIndexRouteImport } from './routes/_authenticated/documents/index'
+import { Route as AuthenticatedOwnerRequestsRouteImport } from './routes/_authenticated/owner/requests'
 import { Route as AuthenticatedOwnerFeedbackRouteImport } from './routes/_authenticated/owner/feedback'
 import { Route as AuthenticatedOwnerFeatureAccessRouteImport } from './routes/_authenticated/owner/feature-access'
 import { Route as AuthenticatedOwnerAnnouncementsRouteImport } from './routes/_authenticated/owner/announcements'
@@ -100,6 +101,12 @@ const AuthenticatedDocumentsIndexRoute =
     path: '/documents/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedOwnerRequestsRoute =
+  AuthenticatedOwnerRequestsRouteImport.update({
+    id: '/requests',
+    path: '/requests',
+    getParentRoute: () => AuthenticatedOwnerRouteRoute,
+  } as any)
 const AuthenticatedOwnerFeedbackRoute =
   AuthenticatedOwnerFeedbackRouteImport.update({
     id: '/feedback',
@@ -146,6 +153,7 @@ export interface FileRoutesByFullPath {
   '/owner/announcements': typeof AuthenticatedOwnerAnnouncementsRoute
   '/owner/feature-access': typeof AuthenticatedOwnerFeatureAccessRoute
   '/owner/feedback': typeof AuthenticatedOwnerFeedbackRoute
+  '/owner/requests': typeof AuthenticatedOwnerRequestsRoute
   '/documents/': typeof AuthenticatedDocumentsIndexRoute
   '/owner/': typeof AuthenticatedOwnerIndexRoute
   '/documents/$documentId/': typeof AuthenticatedDocumentsDocumentIdIndexRoute
@@ -165,6 +173,7 @@ export interface FileRoutesByTo {
   '/owner/announcements': typeof AuthenticatedOwnerAnnouncementsRoute
   '/owner/feature-access': typeof AuthenticatedOwnerFeatureAccessRoute
   '/owner/feedback': typeof AuthenticatedOwnerFeedbackRoute
+  '/owner/requests': typeof AuthenticatedOwnerRequestsRoute
   '/documents': typeof AuthenticatedDocumentsIndexRoute
   '/owner': typeof AuthenticatedOwnerIndexRoute
   '/documents/$documentId': typeof AuthenticatedDocumentsDocumentIdIndexRoute
@@ -187,6 +196,7 @@ export interface FileRoutesById {
   '/_authenticated/owner/announcements': typeof AuthenticatedOwnerAnnouncementsRoute
   '/_authenticated/owner/feature-access': typeof AuthenticatedOwnerFeatureAccessRoute
   '/_authenticated/owner/feedback': typeof AuthenticatedOwnerFeedbackRoute
+  '/_authenticated/owner/requests': typeof AuthenticatedOwnerRequestsRoute
   '/_authenticated/documents/': typeof AuthenticatedDocumentsIndexRoute
   '/_authenticated/owner/': typeof AuthenticatedOwnerIndexRoute
   '/_authenticated/documents/$documentId/': typeof AuthenticatedDocumentsDocumentIdIndexRoute
@@ -209,6 +219,7 @@ export interface FileRouteTypes {
     | '/owner/announcements'
     | '/owner/feature-access'
     | '/owner/feedback'
+    | '/owner/requests'
     | '/documents/'
     | '/owner/'
     | '/documents/$documentId/'
@@ -228,6 +239,7 @@ export interface FileRouteTypes {
     | '/owner/announcements'
     | '/owner/feature-access'
     | '/owner/feedback'
+    | '/owner/requests'
     | '/documents'
     | '/owner'
     | '/documents/$documentId'
@@ -249,6 +261,7 @@ export interface FileRouteTypes {
     | '/_authenticated/owner/announcements'
     | '/_authenticated/owner/feature-access'
     | '/_authenticated/owner/feedback'
+    | '/_authenticated/owner/requests'
     | '/_authenticated/documents/'
     | '/_authenticated/owner/'
     | '/_authenticated/documents/$documentId/'
@@ -362,6 +375,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDocumentsIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/owner/requests': {
+      id: '/_authenticated/owner/requests'
+      path: '/requests'
+      fullPath: '/owner/requests'
+      preLoaderRoute: typeof AuthenticatedOwnerRequestsRouteImport
+      parentRoute: typeof AuthenticatedOwnerRouteRoute
+    }
     '/_authenticated/owner/feedback': {
       id: '/_authenticated/owner/feedback'
       path: '/feedback'
@@ -404,6 +424,7 @@ interface AuthenticatedOwnerRouteRouteChildren {
   AuthenticatedOwnerAnnouncementsRoute: typeof AuthenticatedOwnerAnnouncementsRoute
   AuthenticatedOwnerFeatureAccessRoute: typeof AuthenticatedOwnerFeatureAccessRoute
   AuthenticatedOwnerFeedbackRoute: typeof AuthenticatedOwnerFeedbackRoute
+  AuthenticatedOwnerRequestsRoute: typeof AuthenticatedOwnerRequestsRoute
   AuthenticatedOwnerIndexRoute: typeof AuthenticatedOwnerIndexRoute
 }
 
@@ -412,6 +433,7 @@ const AuthenticatedOwnerRouteRouteChildren: AuthenticatedOwnerRouteRouteChildren
     AuthenticatedOwnerAnnouncementsRoute: AuthenticatedOwnerAnnouncementsRoute,
     AuthenticatedOwnerFeatureAccessRoute: AuthenticatedOwnerFeatureAccessRoute,
     AuthenticatedOwnerFeedbackRoute: AuthenticatedOwnerFeedbackRoute,
+    AuthenticatedOwnerRequestsRoute: AuthenticatedOwnerRequestsRoute,
     AuthenticatedOwnerIndexRoute: AuthenticatedOwnerIndexRoute,
   }
 
