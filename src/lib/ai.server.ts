@@ -102,3 +102,42 @@ export async function synthesizeSpeech(text: string, voice: string): Promise<str
   return btoa(binary);
 }
 
+
+const IMAGE_URL = "https://ai.gateway.lovable.dev/v1/images/generations";
+
+/**
+ * Best-effort illustration for a slide. Returns a data URL, or `null` when the
+ * image model is unavailable — callers must render fine without a picture.
+ */
+export async function generateIllustration(prompt: string): Promise<string | null> {
+  const key = process.env.LOVABLE_API_KEY;
+  if (!key) return null;
+  try {
+    const res = await fetch(IMAGE_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
+      body: JSON.stringify({
+        model: "google/gemini-3.1-flash-image",
+        messages: [
+          {
+            role: "user",
+            content: `Clean, minimal educational diagram illustrating: ${prompt}. Flat vector style, soft purple and blue palette, plenty of white space, no text labels.`,
+          },
+        ],
+        modalities: ["image", "text"],
+      }),
+    });
+    if (!res.ok) return null;
+    const json = (await res.json()) as {
+      choices?: Array<{ message?: { images?: Array<{ image_url?: { url?: string } }> } }>;
+      data?: Array<{ b64_json?: string; url?: string }>;
+    };
+    const fromChat = json.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+    if (fromChat) return fromChat;
+    const first = json.data?.[0];
+    if (first?.b64_json) return `data:image/png;base64,${first.b64_json}`;
+    return first?.url ?? null;
+  } catch {
+    return null;
+  }
+}
