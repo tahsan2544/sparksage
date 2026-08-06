@@ -64,3 +64,41 @@ export function trimDoc(content: string, maxChars = 24_000): string {
   if (content.length <= maxChars) return content;
   return content.slice(0, maxChars) + "\n\n[...truncated for AI processing...]";
 }
+
+const SPEECH_URL = "https://ai.gateway.lovable.dev/v1/audio/speech";
+
+/**
+ * Turn a short piece of text into speech and return it as a base64 MP3 payload
+ * (ready to drop into an `<audio src="data:audio/mp3;base64,...">`).
+ * Used by the podcast-style Audio Overview and the narrated Video Overview.
+ */
+export async function synthesizeSpeech(text: string, voice: string): Promise<string> {
+  const key = process.env.LOVABLE_API_KEY;
+  if (!key) throw new Error("AI is not configured (missing LOVABLE_API_KEY).");
+
+  const res = await fetch(SPEECH_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
+    body: JSON.stringify({
+      model: "openai/gpt-4o-mini-tts",
+      input: text.slice(0, 3_000),
+      voice,
+      response_format: "mp3",
+    }),
+  });
+
+  if (res.status === 429) throw new Error("AI rate limit reached. Please try again in a moment.");
+  if (res.status === 402) throw new Error("AI credits exhausted. Add credits in your workspace billing settings.");
+  if (!res.ok) {
+    const detail = await res.text().catch(() => "");
+    throw new Error(`Speech generation failed (${res.status}): ${detail.slice(0, 200)}`);
+  }
+
+  const buffer = new Uint8Array(await res.arrayBuffer());
+  let binary = "";
+  for (let i = 0; i < buffer.length; i += 0x8000) {
+    binary += String.fromCharCode(...buffer.subarray(i, i + 0x8000));
+  }
+  return btoa(binary);
+}
+
