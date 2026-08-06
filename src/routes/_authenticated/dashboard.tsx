@@ -18,7 +18,6 @@ import { listDocuments } from "@/lib/documents.functions";
 import { listGoals, getProgress } from "@/lib/study.functions";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { UsageMeters } from "@/components/usage-meters";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -196,8 +195,6 @@ function DashboardHome() {
               <p className="text-sm text-muted-foreground">{tip}</p>
             </CardContent>
           </Card>
-
-          <UsageMeters />
         </div>
       </div>
     </div>
