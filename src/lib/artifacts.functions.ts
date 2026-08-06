@@ -62,6 +62,16 @@ export interface DataTable {
   rows: string[][];
 }
 
+/** Union of everything Document Studio can store. */
+export type ArtifactContent =
+  | AudioOverview
+  | VideoOverview
+  | { root: MindMapNode }
+  | ReportDoc
+  | SlideDeck
+  | Infographic
+  | DataTable;
+
 const inputSchema = z.object({
   documentId: uuid,
   kind: z.enum(ARTIFACT_KINDS),
@@ -118,7 +128,7 @@ export const generateArtifact = createServerFn({ method: "POST" })
         user_id: context.userId,
         kind: data.kind,
         variant: data.variant,
-        content: built as unknown as Record<string, unknown>,
+        content: JSON.parse(JSON.stringify(built)),
       },
       { onConflict: "document_id,kind,variant" },
     );
@@ -139,7 +149,7 @@ interface BuildArgs {
   persona: string;
 }
 
-async function build(args: BuildArgs): Promise<unknown> {
+async function build(args: BuildArgs): Promise<ArtifactContent> {
   switch (args.kind) {
     case "audio":
       return buildAudio(args);
