@@ -1,6 +1,7 @@
 /**
- * Settings — profile, plan/subscription and (once) Owner claim.
- * Students never see administration tools here.
+ * Settings — profile, AI personalization, focus-timer defaults and the
+ * one-time Owner claim. SparkSage has no plans or billing: everyone gets the
+ * same generous access.
  */
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
@@ -8,28 +9,39 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
+import { getAccountContext, updateProfile, claimOwnership } from "@/lib/access.functions";
 import {
-  getAccountContext,
-  listVisiblePlans,
-  updateProfile,
-  claimOwnership,
-} from "@/lib/access.functions";
-import { getMyProRequest, requestPro } from "@/lib/pro.functions";
+  DEFAULT_PREFERENCES,
+  getPreferences,
+  savePreferences,
+  type UserPreferences,
+} from "@/lib/preferences.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Check, Crown, Sparkles } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Crown, Sparkles, Timer } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({
     meta: [
       { title: "Settings — SparkSage" },
-      { name: "description", content: "Manage your SparkSage profile, plan and account preferences." },
+      {
+        name: "description",
+        content: "Manage your SparkSage profile, personalize how the AI explains things, and set your focus timer.",
+      },
       { property: "og:title", content: "Settings — SparkSage" },
-      { property: "og:description", content: "Manage your SparkSage profile and subscription." },
+      { property: "og:description", content: "Profile, AI personalization and focus timer preferences." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -37,23 +49,28 @@ export const Route = createFileRoute("/_authenticated/settings")({
   component: SettingsPage,
 });
 
-const FEATURE_LABELS: Record<string, string> = {
-  documents: "Documents",
-  ai_chat_messages_per_day: "AI tutor messages / day",
-  quiz_generations_per_day: "Quiz generations / day",
-  flashcard_generations_per_day: "Flashcard decks / day",
-  summaries_per_day: "Summaries / day",
-};
+const TONE_OPTIONS = [
+  { value: "friendly", label: "Friendly & conversational" },
+  { value: "formal", label: "Formal & professional" },
+  { value: "concise", label: "Short & to the point" },
+  { value: "encouraging", label: "Encouraging & motivating" },
+];
+
+const STYLE_OPTIONS = [
+  { value: "simple", label: "Explain it simply (beginner)" },
+  { value: "balanced", label: "Balanced (default)" },
+  { value: "detailed", label: "Detailed & technical" },
+];
+
+const LANGUAGES = ["English", "Spanish", "French", "German", "Portuguese", "Hindi", "Bengali", "Arabic", "Japanese"];
 
 function SettingsPage() {
   const qc = useQueryClient();
   const accountFn = useServerFn(getAccountContext);
-  const plansFn = useServerFn(listVisiblePlans);
   const saveFn = useServerFn(updateProfile);
   const claimFn = useServerFn(claimOwnership);
 
   const account = useQuery({ queryKey: ["account"], queryFn: () => accountFn({}) });
-  const plans = useQuery({ queryKey: ["visible-plans"], queryFn: () => plansFn({}) });
 
   const [name, setName] = useState("");
   useEffect(() => {
@@ -113,7 +130,7 @@ function SettingsPage() {
     >
       <header className="space-y-1">
         <h1 className="text-3xl font-semibold tracking-tight">Settings</h1>
-        <p className="text-muted-foreground">Your profile, plan and account details.</p>
+        <p className="text-muted-foreground">Your profile, how SparkSage AI talks to you, and your focus timer.</p>
       </header>
 
       <Card>
@@ -145,67 +162,7 @@ function SettingsPage() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader className="flex-row items-center justify-between gap-4 space-y-0">
-          <div>
-            <CardTitle>Subscription</CardTitle>
-            <CardDescription>Your current plan and what it unlocks.</CardDescription>
-          </div>
-          <Badge className="rounded-full px-3 py-1 text-sm">
-            <Sparkles className="mr-1 h-3.5 w-3.5" aria-hidden />
-            {acct.plan?.name ?? "Free"}
-          </Badge>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <ul className="grid gap-2 sm:grid-cols-2">
-            {acct.features
-              .filter((f) => f.isVisible)
-              .map((f) => (
-                <li key={f.featureKey} className="flex items-center justify-between rounded-2xl bg-muted/60 px-4 py-3">
-                  <span className="text-sm">{FEATURE_LABELS[f.featureKey] ?? f.featureKey}</span>
-                  <span className="text-sm font-medium">
-                    {f.maxUsage === null ? "Unlimited" : f.maxUsage}
-                  </span>
-                </li>
-              ))}
-            {acct.features.length === 0 && (
-              <li className="text-sm text-muted-foreground">No limits configured for this plan yet.</li>
-            )}
-          </ul>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            {plans.data?.map((p) => {
-              const current = p.key === acct.plan?.key;
-              return (
-                <div
-                  key={p.id}
-                  className={`rounded-3xl border p-5 transition-shadow hover:shadow-md ${
-                    current ? "border-primary bg-primary/5" : "border-border"
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-semibold">{p.name}</h3>
-                    {current && (
-                      <span className="inline-flex items-center gap-1 text-xs text-primary">
-                        <Check className="h-3.5 w-3.5" aria-hidden /> Current
-                      </span>
-                    )}
-                  </div>
-                  <p className="mt-1 text-sm text-muted-foreground">{p.description}</p>
-                  <p className="mt-4 text-2xl font-semibold">
-                    {p.key === "free" ? "Free" : "By request"}
-                  </p>
-
-                </div>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
-
-      {acct.role !== "owner" && <UpgradeCard planKey={acct.plan?.key ?? "free"} />}
-
-
+      <PreferencesCard />
 
       {acct.role === "owner" ? (
         <Card>
@@ -213,7 +170,7 @@ function SettingsPage() {
             <CardTitle className="flex items-center gap-2">
               <Crown className="h-5 w-5 text-primary" aria-hidden /> Owner access
             </CardTitle>
-            <CardDescription>You manage plans, limits and members.</CardDescription>
+            <CardDescription>You manage members and platform settings.</CardDescription>
           </CardHeader>
           <CardContent>
             <Button asChild>
@@ -241,78 +198,159 @@ function SettingsPage() {
 }
 
 /**
- * Ask the Owner for more capacity. SparkSage does not take payments — the
- * Owner reviews requests in their inbox and grants Pro (or Master) by hand.
+ * Personalize AI + focus-timer defaults. Both live in the same
+ * `user_preferences` row, so they save together.
  */
-function UpgradeCard({ planKey }: { planKey: string }) {
+function PreferencesCard() {
   const qc = useQueryClient();
-  const myRequestFn = useServerFn(getMyProRequest);
-  const requestFn = useServerFn(requestPro);
-  const [message, setMessage] = useState("");
+  const getFn = useServerFn(getPreferences);
+  const saveFn = useServerFn(savePreferences);
+  const prefs = useQuery({ queryKey: ["preferences"], queryFn: () => getFn({}) });
 
-  const request = useQuery({ queryKey: ["my-pro-request"], queryFn: () => myRequestFn() });
+  const [draft, setDraft] = useState<UserPreferences>(DEFAULT_PREFERENCES);
+  useEffect(() => {
+    if (prefs.data) setDraft(prefs.data);
+  }, [prefs.data]);
 
-  const send = useMutation({
-    mutationFn: () => requestFn({ data: { message: message.trim() || undefined } }),
+  const save = useMutation({
+    mutationFn: (value: UserPreferences) => saveFn({ data: value }),
     onSuccess: () => {
-      toast.success("Request sent — the Owner will review it shortly.");
-      setMessage("");
-      qc.invalidateQueries({ queryKey: ["my-pro-request"] });
+      toast.success("Preferences saved — every AI answer will follow them.");
+      qc.invalidateQueries({ queryKey: ["preferences"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
 
-  if (planKey === "master") return null;
+  function set<K extends keyof UserPreferences>(key: K, value: UserPreferences[K]) {
+    setDraft((d) => ({ ...d, [key]: value }));
+  }
 
-  const current = request.data;
-  const pending = current?.status === "pending";
+  const numberField = (
+    id: string,
+    label: string,
+    key: "focusMinutes" | "shortBreakMinutes" | "longBreakMinutes" | "sessionsBeforeLongBreak",
+    max: number,
+  ) => (
+    <div className="grid gap-2">
+      <Label htmlFor={id}>{label}</Label>
+      <Input
+        id={id}
+        type="number"
+        min={1}
+        max={max}
+        value={draft[key]}
+        onChange={(e) => set(key, Math.min(max, Math.max(1, Number(e.target.value) || 1)))}
+      />
+    </div>
+  );
+
+  if (prefs.isLoading) return <Skeleton className="h-96 w-full rounded-3xl" />;
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Crown className="h-5 w-5 text-primary" aria-hidden /> Need more room?
-        </CardTitle>
-        <CardDescription>
-          Pro unlocks much higher daily limits. There's nothing to pay — just tell us how you study and the Owner
-          will review your request.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {current && (
-          <div className="rounded-2xl bg-muted/60 px-4 py-3 text-sm">
-            <p className="font-medium">
-              {pending
-                ? "Your request is waiting for review."
-                : current.status === "approved"
-                  ? "Your last request was approved 🎉"
-                  : "Your last request was declined."}
-            </p>
-            {current.ownerNote && <p className="mt-1 text-muted-foreground">Owner note: {current.ownerNote}</p>}
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-primary" aria-hidden /> Personalize AI
+          </CardTitle>
+          <CardDescription>
+            These preferences are applied to every answer: the tutor, summaries, quizzes, flashcards and everything in
+            Document Studio.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-2">
+              <Label htmlFor="ai-tone">Tone</Label>
+              <Select value={draft.aiTone} onValueChange={(v) => set("aiTone", v as UserPreferences["aiTone"])}>
+                <SelectTrigger id="ai-tone">
+                  <SelectValue placeholder="Choose a tone" />
+                </SelectTrigger>
+                <SelectContent>
+                  {TONE_OPTIONS.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>
+                      {o.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="ai-style">Explanation style</Label>
+              <Select value={draft.aiStyle} onValueChange={(v) => set("aiStyle", v as UserPreferences["aiStyle"])}>
+                <SelectTrigger id="ai-style">
+                  <SelectValue placeholder="Choose a style" />
+                </SelectTrigger>
+                <SelectContent>
+                  {STYLE_OPTIONS.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>
+                      {o.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="ai-language">Language</Label>
+              <Select value={draft.aiLanguage} onValueChange={(v) => set("aiLanguage", v)}>
+                <SelectTrigger id="ai-language">
+                  <SelectValue placeholder="Choose a language" />
+                </SelectTrigger>
+                <SelectContent>
+                  {LANGUAGES.map((l) => (
+                    <SelectItem key={l} value={l}>
+                      {l}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-        )}
-
-        {!pending && planKey !== "pro" && (
-          <div className="grid gap-2 sm:max-w-lg">
-            <Label htmlFor="upgrade-message">Why do you need Pro? (optional)</Label>
-            <Input
-              id="upgrade-message"
-              value={message}
+          <div className="grid gap-2">
+            <Label htmlFor="ai-instructions">Custom instructions</Label>
+            <Textarea
+              id="ai-instructions"
+              rows={4}
               maxLength={1000}
-              placeholder="I'm revising for finals and hit my daily limit."
-              onChange={(e) => setMessage(e.target.value)}
+              value={draft.aiInstructions}
+              placeholder="e.g. I'm studying for A-level biology. Always use real-world examples and finish with one practice question."
+              onChange={(e) => set("aiInstructions", e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">{draft.aiInstructions.length}/1000 characters</p>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Timer className="h-5 w-5 text-primary" aria-hidden /> Focus timer
+          </CardTitle>
+          <CardDescription>Your default Pomodoro lengths. Sessions are logged to Progress automatically.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {numberField("focus-minutes", "Focus (minutes)", "focusMinutes", 180)}
+            {numberField("short-break", "Short break (minutes)", "shortBreakMinutes", 60)}
+            {numberField("long-break", "Long break (minutes)", "longBreakMinutes", 120)}
+            {numberField("sessions-count", "Sessions before long break", "sessionsBeforeLongBreak", 12)}
+          </div>
+          <div className="flex items-center justify-between rounded-2xl bg-muted/60 px-4 py-3">
+            <div>
+              <p className="text-sm font-medium">Chime when a session ends</p>
+              <p className="text-xs text-muted-foreground">A short soft tone, nothing jarring.</p>
+            </div>
+            <Switch
+              checked={draft.soundEnabled}
+              onCheckedChange={(v) => set("soundEnabled", v)}
+              aria-label="Play a sound when a session ends"
             />
           </div>
-        )}
-
-        {planKey === "pro" ? (
-          <p className="text-sm text-muted-foreground">You're on Pro. Contact the Owner if you need unlimited access.</p>
-        ) : (
-          <Button onClick={() => send.mutate()} disabled={send.isPending || pending || request.isLoading}>
-            {pending ? "Request pending" : send.isPending ? "Sending…" : "Request Pro access"}
+          <Button onClick={() => save.mutate(draft)} disabled={save.isPending}>
+            {save.isPending ? "Saving…" : "Save preferences"}
           </Button>
-        )}
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </>
   );
 }

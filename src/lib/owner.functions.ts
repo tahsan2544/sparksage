@@ -35,14 +35,12 @@ export interface OwnerOverview {
   totalStudents: number;
   activeToday: number;
   newSignupsToday: number;
-  planCounts: Record<string, number>;
   documentsToday: number;
   documentsThisMonth: number;
   aiQuestionsToday: number;
   aiQuestionsThisMonth: number;
   studyMinutesThisMonth: number;
   avgStudyMinutesPerStudent: number;
-  conversionRate: number;
   openFeedback: number;
   liveAnnouncements: number;
   quizzesCreated: number;
@@ -106,7 +104,6 @@ export const getOwnerOverview = createServerFn({ method: "GET" })
     ]);
 
     const [
-      { data: subs },
       { data: sessions },
       { data: newest },
       { data: docs },
@@ -114,7 +111,6 @@ export const getOwnerOverview = createServerFn({ method: "GET" })
       { data: anns },
       { data: ai },
     ] = await Promise.all([
-      admin.from("user_subscriptions").select("user_id, plans(key)"),
       admin.from("study_sessions").select("user_id, duration_seconds, occurred_at").gte("occurred_at", monthStart),
       admin.from("profiles").select("id, display_name, email, created_at").order("created_at", { ascending: false }).limit(5),
       admin.from("documents").select("id, title, created_at").order("created_at", { ascending: false }).limit(5),
@@ -136,25 +132,14 @@ export const getOwnerOverview = createServerFn({ method: "GET" })
         .limit(5),
     ]);
 
-    const planCounts: Record<string, number> = {};
-    for (const s of subs ?? []) {
-      const key = (s.plans as { key: string } | null)?.key ?? "none";
-      planCounts[key] = (planCounts[key] ?? 0) + 1;
-    }
-
     const totalSeconds = (sessions ?? []).reduce((sum, s) => sum + (s.duration_seconds ?? 0), 0);
     const activeToday = new Set(
       (sessions ?? []).filter((s) => s.occurred_at >= today).map((s) => s.user_id),
     ).size;
-    const paid = Object.entries(planCounts)
-      .filter(([k]) => k !== "free" && k !== "none")
-      .reduce((a, [, v]) => a + v, 0);
-
     return {
       totalStudents,
       activeToday,
       newSignupsToday,
-      planCounts,
       documentsToday,
       documentsThisMonth,
       aiQuestionsToday,
@@ -162,7 +147,6 @@ export const getOwnerOverview = createServerFn({ method: "GET" })
       studyMinutesThisMonth: Math.round(totalSeconds / 60),
       avgStudyMinutesPerStudent:
         totalStudents > 0 ? Math.round(totalSeconds / 60 / totalStudents) : 0,
-      conversionRate: totalStudents > 0 ? Math.round((paid / totalStudents) * 1000) / 10 : 0,
       openFeedback,
       liveAnnouncements,
       quizzesCreated,

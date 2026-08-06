@@ -74,16 +74,10 @@ function OwnerOverviewPage() {
     );
   }
 
-  const free = data.planCounts["free"] ?? 0;
-  const pro = data.planCounts["pro"] ?? 0;
-
   const stats = [
     { label: "Total students", value: data.totalStudents, icon: Users },
     { label: "Studied today", value: data.activeToday, icon: Activity },
     { label: "New signups today", value: data.newSignupsToday, icon: UserPlus },
-    { label: "Free students", value: free, icon: Users },
-    { label: "Pro students", value: pro, icon: Sparkles },
-    { label: "Conversion rate", value: `${data.conversionRate}%`, icon: TrendingUp },
     { label: "Documents today", value: data.documentsToday, icon: FileText },
     { label: "Documents this month", value: data.documentsThisMonth, icon: FileText },
     { label: "AI questions today", value: data.aiQuestionsToday, icon: MessageSquare },
@@ -132,10 +126,7 @@ function OwnerOverviewPage() {
               <Link to="/owner/announcements">Create announcement</Link>
             </Button>
             <Button asChild variant="secondary">
-              <Link to="/admin">Grant Pro</Link>
-            </Button>
-            <Button asChild variant="secondary">
-              <Link to="/owner/feature-access">Feature access</Link>
+              <Link to="/admin">View members</Link>
             </Button>
             <Button asChild variant="secondary">
               <Link to="/owner/feedback">Review feedback</Link>

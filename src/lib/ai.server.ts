@@ -64,3 +64,80 @@ export function trimDoc(content: string, maxChars = 24_000): string {
   if (content.length <= maxChars) return content;
   return content.slice(0, maxChars) + "\n\n[...truncated for AI processing...]";
 }
+
+const SPEECH_URL = "https://ai.gateway.lovable.dev/v1/audio/speech";
+
+/**
+ * Turn a short piece of text into speech and return it as a base64 MP3 payload
+ * (ready to drop into an `<audio src="data:audio/mp3;base64,...">`).
+ * Used by the podcast-style Audio Overview and the narrated Video Overview.
+ */
+export async function synthesizeSpeech(text: string, voice: string): Promise<string> {
+  const key = process.env.LOVABLE_API_KEY;
+  if (!key) throw new Error("AI is not configured (missing LOVABLE_API_KEY).");
+
+  const res = await fetch(SPEECH_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
+    body: JSON.stringify({
+      model: "openai/gpt-4o-mini-tts",
+      input: text.slice(0, 3_000),
+      voice,
+      response_format: "mp3",
+    }),
+  });
+
+  if (res.status === 429) throw new Error("AI rate limit reached. Please try again in a moment.");
+  if (res.status === 402) throw new Error("AI credits exhausted. Add credits in your workspace billing settings.");
+  if (!res.ok) {
+    const detail = await res.text().catch(() => "");
+    throw new Error(`Speech generation failed (${res.status}): ${detail.slice(0, 200)}`);
+  }
+
+  const buffer = new Uint8Array(await res.arrayBuffer());
+  let binary = "";
+  for (let i = 0; i < buffer.length; i += 0x8000) {
+    binary += String.fromCharCode(...buffer.subarray(i, i + 0x8000));
+  }
+  return btoa(binary);
+}
+
+
+const IMAGE_URL = "https://ai.gateway.lovable.dev/v1/images/generations";
+
+/**
+ * Best-effort illustration for a slide. Returns a data URL, or `null` when the
+ * image model is unavailable — callers must render fine without a picture.
+ */
+export async function generateIllustration(prompt: string): Promise<string | null> {
+  const key = process.env.LOVABLE_API_KEY;
+  if (!key) return null;
+  try {
+    const res = await fetch(IMAGE_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
+      body: JSON.stringify({
+        model: "google/gemini-3.1-flash-image",
+        messages: [
+          {
+            role: "user",
+            content: `Clean, minimal educational diagram illustrating: ${prompt}. Flat vector style, soft purple and blue palette, plenty of white space, no text labels.`,
+          },
+        ],
+        modalities: ["image", "text"],
+      }),
+    });
+    if (!res.ok) return null;
+    const json = (await res.json()) as {
+      choices?: Array<{ message?: { images?: Array<{ image_url?: { url?: string } }> } }>;
+      data?: Array<{ b64_json?: string; url?: string }>;
+    };
+    const fromChat = json.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+    if (fromChat) return fromChat;
+    const first = json.data?.[0];
+    if (first?.b64_json) return `data:image/png;base64,${first.b64_json}`;
+    return first?.url ?? null;
+  } catch {
+    return null;
+  }
+}
