@@ -180,6 +180,47 @@ export type Database = {
           },
         ]
       }
+      document_artifacts: {
+        Row: {
+          content: Json
+          created_at: string
+          document_id: string
+          id: string
+          kind: string
+          updated_at: string
+          user_id: string
+          variant: string
+        }
+        Insert: {
+          content: Json
+          created_at?: string
+          document_id: string
+          id?: string
+          kind: string
+          updated_at?: string
+          user_id: string
+          variant?: string
+        }
+        Update: {
+          content?: Json
+          created_at?: string
+          document_id?: string
+          id?: string
+          kind?: string
+          updated_at?: string
+          user_id?: string
+          variant?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_artifacts_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       document_summaries: {
         Row: {
           content: string
@@ -408,45 +449,6 @@ export type Database = {
         }
         Relationships: []
       }
-      pro_requests: {
-        Row: {
-          created_at: string
-          decided_at: string | null
-          decided_by: string | null
-          id: string
-          message: string | null
-          owner_note: string | null
-          requested_plan: string
-          status: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          decided_at?: string | null
-          decided_by?: string | null
-          id?: string
-          message?: string | null
-          owner_note?: string | null
-          requested_plan?: string
-          status?: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          decided_at?: string | null
-          decided_by?: string | null
-          id?: string
-          message?: string | null
-          owner_note?: string | null
-          requested_plan?: string
-          status?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       profiles: {
         Row: {
           created_at: string
@@ -591,6 +593,51 @@ export type Database = {
           created_at?: string
           feature_key?: string
           id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_preferences: {
+        Row: {
+          ai_instructions: string
+          ai_language: string
+          ai_style: string
+          ai_tone: string
+          created_at: string
+          focus_minutes: number
+          long_break_minutes: number
+          sessions_before_long_break: number
+          short_break_minutes: number
+          sound_enabled: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ai_instructions?: string
+          ai_language?: string
+          ai_style?: string
+          ai_tone?: string
+          created_at?: string
+          focus_minutes?: number
+          long_break_minutes?: number
+          sessions_before_long_break?: number
+          short_break_minutes?: number
+          sound_enabled?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ai_instructions?: string
+          ai_language?: string
+          ai_style?: string
+          ai_tone?: string
+          created_at?: string
+          focus_minutes?: number
+          long_break_minutes?: number
+          sessions_before_long_break?: number
+          short_break_minutes?: number
+          sound_enabled?: boolean
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
