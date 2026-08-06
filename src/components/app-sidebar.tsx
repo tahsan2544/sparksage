@@ -38,7 +38,6 @@ export type NavTarget =
   | "/settings"
   | "/admin"
   | "/owner"
-  | "/owner/feature-access"
   | "/owner/announcements"
   | "/owner/feedback"
   | "/site-settings";
@@ -57,10 +56,9 @@ const accountItems: { title: string; url: NavTarget; icon: typeof FileText }[] =
 
 const ownerItems: { title: string; url: NavTarget; icon: typeof FileText }[] = [
   { title: "Overview", url: "/owner", icon: Gauge },
-  { title: "Feature access", url: "/owner/feature-access", icon: SlidersHorizontal },
   { title: "Announcements", url: "/owner/announcements", icon: Megaphone },
   { title: "Feedback", url: "/owner/feedback", icon: Inbox },
-  { title: "Plans & members", url: "/admin", icon: ShieldCheck },
+  { title: "Members", url: "/admin", icon: ShieldCheck },
   { title: "Site settings", url: "/site-settings", icon: SlidersHorizontal },
 ];
 
