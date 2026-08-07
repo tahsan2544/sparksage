@@ -125,7 +125,11 @@ const FAQS = [
     q: "Can I use it in Bangla?",
     a: "Yes. You can ask for explanations in Bangla or English, and more languages are on the way.",
   },
-  { q: "Is there a free plan?", a: "Yes — start free, and upgrade only when you need higher limits." },
+  {
+    q: "How much does SparkSage cost?",
+    a: "Nothing. Every account gets the same generous access to the tutor, summaries, quizzes, flashcards, Document Studio and the planner.",
+  },
+
   {
     q: "Do I need an internet connection?",
     a: "Yes. SparkSage is fully cloud-based, so your material and the AI tutor are always available on any device with a connection.",
@@ -133,7 +137,7 @@ const FAQS = [
 ];
 
 function Landing() {
-  const { settings, plans } = Route.useLoaderData() as { settings: SettingsMap; plans: PublicPlan[] };
+  const { settings } = Route.useLoaderData() as { settings: SettingsMap };
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -165,7 +169,7 @@ function Landing() {
         <nav aria-label="Landing" className="hidden md:flex items-center gap-6 text-sm text-muted-foreground">
           <a href="#features" className="hover:text-foreground">Features</a>
           <a href="#how" className="hover:text-foreground">How it works</a>
-          <a href="#pricing" className="hover:text-foreground">Pricing</a>
+          <a href="#faq" className="hover:text-foreground">FAQ</a>
           <a href="#faq" className="hover:text-foreground">FAQ</a>
         </nav>
         <div className="flex items-center gap-2">
@@ -357,7 +361,8 @@ function Landing() {
           <span>© {new Date().getFullYear()} {appName}</span>
           <div className="flex flex-wrap items-center gap-5">
             <a href="#features" className="hover:text-foreground">Features</a>
-            <a href="#pricing" className="hover:text-foreground">Pricing</a>
+            <a href="#faq" className="hover:text-foreground">FAQ</a>
+
             {settings.support_email && (
               <a href={`mailto:${settings.support_email}`} className="hover:text-foreground">
                 Support
@@ -501,9 +506,4 @@ function UploadAnimation() {
       </div>
     </div>
   );
-}
-
-
-function humanFeature(key: string): string {
-  return key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
