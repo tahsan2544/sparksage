@@ -163,10 +163,13 @@ export const sendMessage = createServerFn({ method: "POST" })
     if (uErr) throw new Error(uErr.message);
 
     const { callAI, trimDoc } = await import("@/lib/ai.server");
-    const systemPrompt = `You are a helpful study assistant answering questions about a specific document.\nAlways ground your answer in the document. If the document does not contain the answer, say so plainly.\n\nDocument title: ${doc.title}\n---\n${trimDoc(doc.content)}\n---`;
+    const { personaPrompt } = await import("@/lib/persona.server");
+    const persona = await personaPrompt(context.supabase, context.userId);
+    const systemPrompt = `You are a helpful study assistant answering questions about a specific document.\nAlways ground your answer in the document. If the document does not contain the answer, say so plainly.\n\nDocument title: ${doc.title}\n---\n${trimDoc(doc.content)}\n---${persona}`;
 
     const messages = [
       { role: "system" as const, content: systemPrompt },
+
       ...(history ?? []).map((m) => ({ role: m.role as "user" | "assistant", content: m.content })),
       { role: "user" as const, content: data.content },
     ];
