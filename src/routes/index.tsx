@@ -13,7 +13,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { getPublicSiteData, type SettingsMap, type PublicPlan } from "@/lib/settings.functions";
+import { getPublicSiteData, type SettingsMap } from "@/lib/settings.functions";
 import { savePendingUpload } from "@/lib/pending-upload";
 import { extractText, DOCUMENT_ACCEPT } from "@/lib/extract-text";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -41,25 +41,63 @@ import {
   Upload,
 } from "lucide-react";
 
+const SITE_URL = "https://sparksage.lovable.app";
+
 export const Route = createFileRoute("/")({
   loader: () => getPublicSiteData(),
   head: () => ({
     meta: [
-      { title: "SparkSage — Study smarter, not harder" },
+      { title: "SparkSage — AI study companion for your notes" },
       {
         name: "description",
         content:
           "Upload your notes, books or slides and let AI help you learn faster with summaries, quizzes, flashcards and personalized explanations.",
       },
-      { property: "og:title", content: "SparkSage — Study smarter, not harder" },
+      { property: "og:title", content: "SparkSage — AI study companion for your notes" },
       {
         property: "og:description",
         content: "AI summaries, quizzes, flashcards and a study planner built around your own material.",
       },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: `${SITE_URL}/` },
       { name: "twitter:card", content: "summary_large_image" },
     ],
+    links: [{ rel: "canonical", href: `${SITE_URL}/` }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "Organization",
+              "@id": `${SITE_URL}/#organization`,
+              name: "SparkSage",
+              url: `${SITE_URL}/`,
+              description:
+                "SparkSage turns your own documents into an AI tutor, summaries, quizzes, flashcards and a study plan.",
+            },
+            {
+              "@type": "WebSite",
+              "@id": `${SITE_URL}/#website`,
+              name: "SparkSage",
+              url: `${SITE_URL}/`,
+              publisher: { "@id": `${SITE_URL}/#organization` },
+            },
+            {
+              "@type": "FAQPage",
+              mainEntity: FAQS.map((f) => ({
+                "@type": "Question",
+                name: f.q,
+                acceptedAnswer: { "@type": "Answer", text: f.a },
+              })),
+            },
+          ],
+        }),
+      },
+    ],
   }),
+
   component: Landing,
 });
 
