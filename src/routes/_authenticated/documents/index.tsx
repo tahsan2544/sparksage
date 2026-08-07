@@ -40,9 +40,21 @@ export const Route = createFileRoute("/_authenticated/documents/")({
   head: () => ({
     meta: [
       { title: "Your documents — SparkSage" },
-      { name: "description", content: "All your uploaded documents in one place." },
+      {
+        name: "description",
+        content:
+          "Your SparkSage library: every note, PDF, slide deck and transcript you have uploaded, ready to study with AI.",
+      },
+      { property: "og:title", content: "Your document library — SparkSage" },
+      {
+        property: "og:description",
+        content: "Upload notes, books and slides, then turn them into chats, summaries, quizzes and flashcards.",
+      },
+      { property: "og:url", content: "https://sparksage.lovable.app/documents" },
     ],
+    links: [{ rel: "canonical", href: "https://sparksage.lovable.app/documents" }],
   }),
+
   component: Dashboard,
 });
 

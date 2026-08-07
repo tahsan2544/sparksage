@@ -22,10 +22,22 @@ import { Button } from "@/components/ui/button";
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
-      { title: "Dashboard — SparkSage" },
-      { name: "description", content: "Your study home: streaks, recent documents and today's tasks." },
+      { title: "Study dashboard — SparkSage" },
+      {
+        name: "description",
+        content:
+          "Your SparkSage study home: current streak, recent documents, today's goals and a fresh study tip each visit.",
+      },
+      { property: "og:title", content: "Your study dashboard — SparkSage" },
+      {
+        property: "og:description",
+        content: "Pick up where you left off: streaks, recent documents and today's study tasks.",
+      },
+      { property: "og:url", content: "https://sparksage.lovable.app/dashboard" },
     ],
+    links: [{ rel: "canonical", href: "https://sparksage.lovable.app/dashboard" }],
   }),
+
   component: DashboardHome,
 });
 

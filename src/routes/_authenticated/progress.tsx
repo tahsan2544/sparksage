@@ -25,9 +25,21 @@ export const Route = createFileRoute("/_authenticated/progress")({
   head: () => ({
     meta: [
       { title: "Your progress — SparkSage" },
-      { name: "description", content: "Track study time, streaks, and learning progress." },
+      {
+        name: "description",
+        content:
+          "Track focused study time, daily streaks and everything you have created over the last 30 days in SparkSage.",
+      },
+      { property: "og:title", content: "Your study progress — SparkSage" },
+      {
+        property: "og:description",
+        content: "See your focus hours, streaks and study activity trends at a glance.",
+      },
+      { property: "og:url", content: "https://sparksage.lovable.app/progress" },
     ],
+    links: [{ rel: "canonical", href: "https://sparksage.lovable.app/progress" }],
   }),
+
   component: ProgressPage,
 });
 
