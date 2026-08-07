@@ -22,10 +22,22 @@ import { Button } from "@/components/ui/button";
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
-      { title: "Dashboard — SparkSage" },
-      { name: "description", content: "Your study home: streaks, recent documents and today's tasks." },
+      { title: "Study dashboard — SparkSage" },
+      {
+        name: "description",
+        content:
+          "Your SparkSage study home: current streak, recent documents, today's goals and a fresh study tip each visit.",
+      },
+      { property: "og:title", content: "Your study dashboard — SparkSage" },
+      {
+        property: "og:description",
+        content: "Pick up where you left off: streaks, recent documents and today's study tasks.",
+      },
+      { property: "og:url", content: "https://sparksage.lovable.app/dashboard" },
     ],
+    links: [{ rel: "canonical", href: "https://sparksage.lovable.app/dashboard" }],
   }),
+
   component: DashboardHome,
 });
 
@@ -64,7 +76,9 @@ function DashboardHome() {
   return (
     <div className="space-y-8">
       <header>
-        <h1 className="text-2xl font-bold tracking-tight">{greeting} 👋</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Your study dashboard</h1>
+        <p className="text-sm text-muted-foreground mt-1">{greeting} 👋</p>
+
         <p className="text-sm text-muted-foreground mt-1">
           {dueToday > 0
             ? `You have ${dueToday} task${dueToday === 1 ? "" : "s"} due today. Let's clear them.`

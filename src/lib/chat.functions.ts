@@ -69,14 +69,19 @@ export const askTutor = createServerFn({ method: "POST" })
     ].join("");
     parts.unshift({ type: "text", text });
 
+    // Student's saved tone / style / language preferences are appended to every prompt.
+    const { personaPrompt } = await import("@/lib/persona.server");
+    const persona = await personaPrompt(context.supabase, context.userId);
+
     const answer = await callAI({
       model: "google/gemini-3.6-flash",
       messages: [
-        { role: "system", content: SYSTEM_PROMPT },
+        { role: "system", content: SYSTEM_PROMPT + persona },
         ...data.history.map((m) => ({ role: m.role, content: m.content })),
         { role: "user", content: parts },
       ],
     });
+
 
     await recordUsage(context.userId, "ai_chat_messages_per_day");
     return { answer };

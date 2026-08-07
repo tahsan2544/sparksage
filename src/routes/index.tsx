@@ -13,7 +13,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { getPublicSiteData, type SettingsMap, type PublicPlan } from "@/lib/settings.functions";
+import { getPublicSiteData, type SettingsMap } from "@/lib/settings.functions";
 import { savePendingUpload } from "@/lib/pending-upload";
 import { extractText, DOCUMENT_ACCEPT } from "@/lib/extract-text";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -41,25 +41,63 @@ import {
   Upload,
 } from "lucide-react";
 
+const SITE_URL = "https://sparksage.lovable.app";
+
 export const Route = createFileRoute("/")({
   loader: () => getPublicSiteData(),
   head: () => ({
     meta: [
-      { title: "SparkSage — Study smarter, not harder" },
+      { title: "SparkSage — AI study companion for your notes" },
       {
         name: "description",
         content:
           "Upload your notes, books or slides and let AI help you learn faster with summaries, quizzes, flashcards and personalized explanations.",
       },
-      { property: "og:title", content: "SparkSage — Study smarter, not harder" },
+      { property: "og:title", content: "SparkSage — AI study companion for your notes" },
       {
         property: "og:description",
         content: "AI summaries, quizzes, flashcards and a study planner built around your own material.",
       },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: `${SITE_URL}/` },
       { name: "twitter:card", content: "summary_large_image" },
     ],
+    links: [{ rel: "canonical", href: `${SITE_URL}/` }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "Organization",
+              "@id": `${SITE_URL}/#organization`,
+              name: "SparkSage",
+              url: `${SITE_URL}/`,
+              description:
+                "SparkSage turns your own documents into an AI tutor, summaries, quizzes, flashcards and a study plan.",
+            },
+            {
+              "@type": "WebSite",
+              "@id": `${SITE_URL}/#website`,
+              name: "SparkSage",
+              url: `${SITE_URL}/`,
+              publisher: { "@id": `${SITE_URL}/#organization` },
+            },
+            {
+              "@type": "FAQPage",
+              mainEntity: FAQS.map((f) => ({
+                "@type": "Question",
+                name: f.q,
+                acceptedAnswer: { "@type": "Answer", text: f.a },
+              })),
+            },
+          ],
+        }),
+      },
+    ],
   }),
+
   component: Landing,
 });
 
@@ -125,7 +163,11 @@ const FAQS = [
     q: "Can I use it in Bangla?",
     a: "Yes. You can ask for explanations in Bangla or English, and more languages are on the way.",
   },
-  { q: "Is there a free plan?", a: "Yes — start free, and upgrade only when you need higher limits." },
+  {
+    q: "How much does SparkSage cost?",
+    a: "Nothing. Every account gets the same generous access to the tutor, summaries, quizzes, flashcards, Document Studio and the planner.",
+  },
+
   {
     q: "Do I need an internet connection?",
     a: "Yes. SparkSage is fully cloud-based, so your material and the AI tutor are always available on any device with a connection.",
@@ -133,7 +175,7 @@ const FAQS = [
 ];
 
 function Landing() {
-  const { settings, plans } = Route.useLoaderData() as { settings: SettingsMap; plans: PublicPlan[] };
+  const { settings } = Route.useLoaderData() as { settings: SettingsMap };
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -165,7 +207,7 @@ function Landing() {
         <nav aria-label="Landing" className="hidden md:flex items-center gap-6 text-sm text-muted-foreground">
           <a href="#features" className="hover:text-foreground">Features</a>
           <a href="#how" className="hover:text-foreground">How it works</a>
-          <a href="#pricing" className="hover:text-foreground">Pricing</a>
+          <a href="#faq" className="hover:text-foreground">FAQ</a>
           <a href="#faq" className="hover:text-foreground">FAQ</a>
         </nav>
         <div className="flex items-center gap-2">
@@ -313,75 +355,8 @@ function Landing() {
           </div>
         </section>
 
-        {/* Pricing */}
-        <section id="pricing" className="mx-auto max-w-6xl px-4 py-20">
-          <SectionHeading
-            eyebrow="Pricing"
-            title="Free to start — no card, ever"
-            body="SparkSage doesn't take payments. Everyone starts on Free; when you need more room you simply request Pro from your settings and we grant it. Master, with everything unlimited, is handed out personally."
-          />
-          <div className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {plans.map((plan, i) => (
-              <div
-                key={plan.key}
-                className={`rounded-3xl border bg-card p-6 ${
-                  i === 1 ? "border-primary shadow-[var(--shadow-elegant)]" : "border-border"
-                }`}
-              >
-                {i === 1 && (
-                  <span className="inline-block rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary mb-3">
-                    Most popular
-                  </span>
-                )}
-                <h3 className="font-semibold text-lg">{plan.name}</h3>
-                <p className="text-sm text-muted-foreground mt-1 min-h-10">{plan.description}</p>
-                <div className="mt-4 text-3xl font-bold">
-                  {plan.key === "free" ? "Free" : "By request"}
-                </div>
-                <ul className="mt-5 space-y-2 text-sm">
-                  {plan.features.map((f) => (
-                    <li key={f.featureKey} className="flex items-start gap-2">
-                      <Check className="h-4 w-4 text-primary mt-0.5 shrink-0" aria-hidden />
-                      <span>
-                        {humanFeature(f.featureKey)}:{" "}
-                        <span className="text-muted-foreground">
-                          {f.maxUsage === null ? "Unlimited" : f.maxUsage}
-                        </span>
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-                <Link to="/auth" className="block mt-6">
-                  <Button className="w-full" variant={i === 1 ? "default" : "outline"}>
-                    {plan.key === "free" ? "Start free" : `Request ${plan.name}`}
-                  </Button>
-                </Link>
-              </div>
-            ))}
 
-            {/* Master is invite-only, so it is described rather than listed from the database. */}
-            <div className="rounded-3xl border border-dashed border-border bg-card p-6">
-              <h3 className="text-lg font-semibold">Master</h3>
-              <p className="mt-1 min-h-10 text-sm text-muted-foreground">
-                Everything unlimited. Granted personally by the SparkSage owner.
-              </p>
-              <div className="mt-4 text-3xl font-bold">Invite only</div>
-              <ul className="mt-5 space-y-2 text-sm">
-                <li className="flex items-start gap-2">
-                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />
-                  <span>Unlimited documents, tutor chats, quizzes and flashcards</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />
-                  <span>No daily caps of any kind</span>
-                </li>
-              </ul>
-              <Button className="mt-6 w-full" variant="outline" disabled>
-                Owner-granted
-              </Button>
-            </div>
-          </div>
-        </section>
+
 
         {/* FAQ */}
         <section id="faq" className="border-t border-border bg-muted/30">
@@ -424,7 +399,8 @@ function Landing() {
           <span>© {new Date().getFullYear()} {appName}</span>
           <div className="flex flex-wrap items-center gap-5">
             <a href="#features" className="hover:text-foreground">Features</a>
-            <a href="#pricing" className="hover:text-foreground">Pricing</a>
+            <a href="#faq" className="hover:text-foreground">FAQ</a>
+
             {settings.support_email && (
               <a href={`mailto:${settings.support_email}`} className="hover:text-foreground">
                 Support
@@ -568,9 +544,4 @@ function UploadAnimation() {
       </div>
     </div>
   );
-}
-
-
-function humanFeature(key: string): string {
-  return key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }

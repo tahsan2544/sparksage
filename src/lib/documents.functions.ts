@@ -163,10 +163,13 @@ export const sendMessage = createServerFn({ method: "POST" })
     if (uErr) throw new Error(uErr.message);
 
     const { callAI, trimDoc } = await import("@/lib/ai.server");
-    const systemPrompt = `You are a helpful study assistant answering questions about a specific document.\nAlways ground your answer in the document. If the document does not contain the answer, say so plainly.\n\nDocument title: ${doc.title}\n---\n${trimDoc(doc.content)}\n---`;
+    const { personaPrompt } = await import("@/lib/persona.server");
+    const persona = await personaPrompt(context.supabase, context.userId);
+    const systemPrompt = `You are a helpful study assistant answering questions about a specific document.\nAlways ground your answer in the document. If the document does not contain the answer, say so plainly.\n\nDocument title: ${doc.title}\n---\n${trimDoc(doc.content)}\n---${persona}`;
 
     const messages = [
       { role: "system" as const, content: systemPrompt },
+
       ...(history ?? []).map((m) => ({ role: m.role as "user" | "assistant", content: m.content })),
       { role: "user" as const, content: data.content },
     ];
@@ -226,13 +229,17 @@ export const generateSummary = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
 
     const { callAI, trimDoc } = await import("@/lib/ai.server");
+    const { personaPrompt } = await import("@/lib/persona.server");
+    const persona = await personaPrompt(context.supabase, context.userId);
     const summary = await callAI({
       messages: [
         {
           role: "system",
           content:
-            "You write concise, well-structured study summaries. Use short paragraphs and a bulleted list of key takeaways. Format with Markdown.",
+            "You write concise, well-structured study summaries. Use short paragraphs and a bulleted list of key takeaways. Format with Markdown." +
+            persona,
         },
+
         {
           role: "user",
           content: `Summarize the following document titled "${doc.title}":\n\n${trimDoc(doc.content)}`,
@@ -284,13 +291,17 @@ export const generateQuiz = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
 
     const { callAI, trimDoc } = await import("@/lib/ai.server");
+    const { personaPrompt } = await import("@/lib/persona.server");
+    const persona = await personaPrompt(context.supabase, context.userId);
     const raw = await callAI({
       messages: [
         {
           role: "system",
           content:
-            "You create high-quality multiple-choice study quizzes. Reply with strict JSON only, matching this shape: {\"questions\":[{\"question\":string,\"choices\":[string,string,string,string],\"answerIndex\":number,\"explanation\":string}]}. Each question must have exactly 4 choices and answerIndex must be 0-3.",
+            "You create high-quality multiple-choice study quizzes. Reply with strict JSON only, matching this shape: {\"questions\":[{\"question\":string,\"choices\":[string,string,string,string],\"answerIndex\":number,\"explanation\":string}]}. Each question must have exactly 4 choices and answerIndex must be 0-3." +
+            persona,
         },
+
         {
           role: "user",
           content: `Create ${data.count} quiz questions from the document titled "${doc.title}". Return ONLY the JSON.\n\n${trimDoc(doc.content)}`,
@@ -344,13 +355,17 @@ export const generateFlashcards = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
 
     const { callAI, trimDoc } = await import("@/lib/ai.server");
+    const { personaPrompt } = await import("@/lib/persona.server");
+    const persona = await personaPrompt(context.supabase, context.userId);
     const raw = await callAI({
       messages: [
         {
           role: "system",
           content:
-            "You create study flashcards. Reply with strict JSON only: {\"cards\":[{\"front\":string,\"back\":string}]}. Front is a short question or term; back is a concise answer.",
+            "You create study flashcards. Reply with strict JSON only: {\"cards\":[{\"front\":string,\"back\":string}]}. Front is a short question or term; back is a concise answer." +
+            persona,
         },
+
         {
           role: "user",
           content: `Create ${data.count} flashcards from the document titled "${doc.title}". Return ONLY the JSON.\n\n${trimDoc(doc.content)}`,

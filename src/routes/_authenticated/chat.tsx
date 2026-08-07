@@ -293,7 +293,7 @@ function ChatWithAI() {
                           className="inline-flex items-center gap-1.5 rounded-xl bg-background/20 px-2 py-1 text-xs"
                         >
                           {f.kind === "image" && f.previewUrl ? (
-                            <img src={f.previewUrl} alt={f.name} className="h-8 w-8 rounded-md object-cover" />
+                            <img src={f.previewUrl} alt="" aria-hidden className="h-8 w-8 rounded-md object-cover" />
                           ) : (
                             <KindIcon kind={f.kind} />
                           )}
@@ -326,7 +326,7 @@ function ChatWithAI() {
               {files.map((f) => (
                 <div key={f.id} className="rounded-2xl border border-border bg-muted/30 p-2 flex items-center gap-3">
                   {f.kind === "image" && f.previewUrl ? (
-                    <img src={f.previewUrl} alt={f.name} className="h-12 w-12 rounded-xl object-cover shrink-0" />
+                    <img src={f.previewUrl} alt="" aria-hidden className="h-12 w-12 rounded-xl object-cover shrink-0" />
                   ) : f.kind === "video" && f.previewUrl ? (
                     <video src={f.previewUrl} className="h-12 w-12 rounded-xl object-cover shrink-0" muted />
                   ) : (

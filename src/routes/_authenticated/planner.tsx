@@ -27,9 +27,21 @@ export const Route = createFileRoute("/_authenticated/planner")({
   head: () => ({
     meta: [
       { title: "Study planner — SparkSage" },
-      { name: "description", content: "Plan study goals, deadlines, and revision schedule." },
+      {
+        name: "description",
+        content:
+          "Plan your study goals, set deadlines and keep your revision schedule on track with the SparkSage planner.",
+      },
+      { property: "og:title", content: "Study planner — SparkSage" },
+      {
+        property: "og:description",
+        content: "Set study goals with deadlines and see what needs your attention today.",
+      },
+      { property: "og:url", content: "https://sparksage.lovable.app/planner" },
     ],
+    links: [{ rel: "canonical", href: "https://sparksage.lovable.app/planner" }],
   }),
+
   component: PlannerPage,
 });
 

@@ -13,10 +13,22 @@ import { lovable } from "@/integrations/lovable/index";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Sign in — SparkSage" },
-      { name: "description", content: "Sign in to SparkSage to chat with, summarize, and quiz your documents." },
+      { title: "Sign in or create your account — SparkSage" },
+      {
+        name: "description",
+        content:
+          "Sign in to SparkSage, or create a free account, to chat with your documents and generate summaries, quizzes and flashcards.",
+      },
+      { property: "og:title", content: "Sign in to SparkSage" },
+      {
+        property: "og:description",
+        content: "Access your AI study companion: document chat, summaries, quizzes, flashcards and your study plan.",
+      },
+      { property: "og:url", content: "https://sparksage.lovable.app/auth" },
     ],
+    links: [{ rel: "canonical", href: "https://sparksage.lovable.app/auth" }],
   }),
+
   component: AuthPage,
 });
 
@@ -90,9 +102,11 @@ function AuthPage() {
           <Sparkles className="h-6 w-6 text-primary" aria-hidden />
           <span className="text-lg">SparkSage</span>
         </Link>
+        <h1 className="sr-only">Sign in to SparkSage</h1>
         <Card>
           <CardHeader>
             <CardTitle>{mode === "signin" ? "Welcome back" : "Create your account"}</CardTitle>
+
             <CardDescription>
               {mode === "signin"
                 ? "Sign in to keep studying your documents."
