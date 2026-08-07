@@ -102,9 +102,11 @@ function AuthPage() {
           <Sparkles className="h-6 w-6 text-primary" aria-hidden />
           <span className="text-lg">SparkSage</span>
         </Link>
+        <h1 className="sr-only">Sign in to SparkSage</h1>
         <Card>
           <CardHeader>
             <CardTitle>{mode === "signin" ? "Welcome back" : "Create your account"}</CardTitle>
+
             <CardDescription>
               {mode === "signin"
                 ? "Sign in to keep studying your documents."

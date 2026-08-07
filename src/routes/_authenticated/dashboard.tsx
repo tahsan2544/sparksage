@@ -76,7 +76,9 @@ function DashboardHome() {
   return (
     <div className="space-y-8">
       <header>
-        <h1 className="text-2xl font-bold tracking-tight">{greeting} 👋</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Your study dashboard</h1>
+        <p className="text-sm text-muted-foreground mt-1">{greeting} 👋</p>
+
         <p className="text-sm text-muted-foreground mt-1">
           {dueToday > 0
             ? `You have ${dueToday} task${dueToday === 1 ? "" : "s"} due today. Let's clear them.`
