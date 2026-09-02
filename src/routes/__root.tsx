@@ -84,7 +84,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:title", content: "SparkSage — AI study companion" },
       { property: "og:description", content: "Chat with your documents; generate summaries, quizzes, and flashcards." },
       { property: "og:type", content: "website" },
+      { property: "og:site_name", content: "SparkSage" },
       { name: "twitter:card", content: "summary_large_image" },
+      // Google Search Console ownership verification for sparksage.lovable.app
+      { name: "google-site-verification", content: "qD2wbIbfTsX_p67Au0gEw3sNiOTZide8Q14-a4iWtpE" },
+
     ],
     links: [
       {
