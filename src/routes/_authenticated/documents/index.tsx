@@ -99,10 +99,14 @@ function Dashboard() {
           <h1 className="text-2xl font-bold tracking-tight">Your documents</h1>
           <p className="text-sm text-muted-foreground">Upload a document to chat with it and generate study material.</p>
         </div>
-        <NewDocumentDialog
-          pending={pending}
-          onPendingHandled={() => setPending(null)}
-        />
+        <div className="flex flex-wrap gap-2">
+          <SampleCourseButton />
+          <NewDocumentDialog
+            pending={pending}
+            onPendingHandled={() => setPending(null)}
+          />
+        </div>
+
       </div>
 
       {processing && (
