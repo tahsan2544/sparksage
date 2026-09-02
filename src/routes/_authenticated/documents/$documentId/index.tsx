@@ -24,6 +24,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sparkles, MessageSquare, Plus, Trash2, ChevronLeft, RefreshCw, Check, Repeat, Shuffle } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { DocumentStudio } from "@/components/document-studio";
+
 
 export const Route = createFileRoute("/_authenticated/documents/$documentId/")({
   head: ({ params }) => ({
