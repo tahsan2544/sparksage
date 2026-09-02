@@ -24,6 +24,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sparkles, MessageSquare, Plus, Trash2, ChevronLeft, RefreshCw, Check, Repeat, Shuffle } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { DocumentStudio } from "@/components/document-studio";
+
 
 export const Route = createFileRoute("/_authenticated/documents/$documentId/")({
   head: ({ params }) => ({
@@ -68,10 +70,11 @@ function DocumentPage() {
 
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
         <Tabs defaultValue="summary" className="min-w-0">
-          <TabsList>
+          <TabsList className="flex flex-wrap h-auto">
             <TabsTrigger value="summary">Summary</TabsTrigger>
             <TabsTrigger value="quiz">Quiz</TabsTrigger>
             <TabsTrigger value="flashcards">Flashcards</TabsTrigger>
+            <TabsTrigger value="studio">Studio</TabsTrigger>
             <TabsTrigger value="content">Content</TabsTrigger>
           </TabsList>
           <TabsContent value="summary" className="mt-4">
@@ -83,7 +86,11 @@ function DocumentPage() {
           <TabsContent value="flashcards" className="mt-4">
             <FlashcardsPanel documentId={documentId} />
           </TabsContent>
+          <TabsContent value="studio" className="mt-4">
+            <DocumentStudio documentId={documentId} />
+          </TabsContent>
           <TabsContent value="content" className="mt-4">
+
             <Card>
               <CardHeader>
                 <CardTitle className="text-base">Original text</CardTitle>
