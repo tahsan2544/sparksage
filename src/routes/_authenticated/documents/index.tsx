@@ -147,18 +147,57 @@ function SkeletonGrid() {
   );
 }
 
+/**
+ * One-click demo: creates a ready-made course document so Document Studio
+ * (audio, video, mind map, reports, slides, infographic, table) can be tested
+ * end to end without uploading anything.
+ */
+function SampleCourseButton() {
+  const create = useServerFn(createDocument);
+  const qc = useQueryClient();
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+
+  async function load() {
+    setLoading(true);
+    try {
+      const { id } = await create({
+        data: { title: SAMPLE_COURSE_TITLE, content: SAMPLE_COURSE_CONTENT },
+      });
+      toast.success("Sample course added — open the Studio tab to test it");
+      qc.invalidateQueries({ queryKey: ["documents"] });
+      navigate({ to: "/documents/$documentId", params: { documentId: id } });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not add the sample course");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <Button variant="outline" onClick={load} disabled={loading}>
+      <GraduationCap className="h-4 w-4 mr-2" aria-hidden />
+      {loading ? "Adding…" : "Load sample course"}
+    </Button>
+  );
+}
+
 function EmptyState() {
   return (
     <div className="rounded-xl border border-dashed border-border p-10 text-center">
       <FileText className="mx-auto h-8 w-8 text-muted-foreground mb-3" aria-hidden />
       <h2 className="font-semibold text-lg">No documents yet</h2>
-      <p className="text-sm text-muted-foreground mt-1">Upload your first document to get started.</p>
-      <div className="mt-4 flex justify-center">
+      <p className="text-sm text-muted-foreground mt-1">
+        Upload your first document, or load the sample course to try everything out.
+      </p>
+      <div className="mt-4 flex flex-wrap justify-center gap-2">
+        <SampleCourseButton />
         <NewDocumentDialog />
       </div>
     </div>
   );
 }
+
 
 function DocumentCard({ doc }: { doc: { id: string; title: string; created_at: string; updated_at: string } }) {
   const qc = useQueryClient();
