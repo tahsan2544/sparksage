@@ -258,7 +258,15 @@ export const generateSummary = createServerFn({ method: "POST" })
     return { content: summary };
   });
 
-export type QuizQuestion = { question: string; choices: string[]; answerIndex: number; explanation: string };
+export type QuizQuestion = {
+  question: string;
+  choices: string[];
+  answerIndex: number;
+  explanation: string;
+  /** Short concept label used for weak-area tracking (added by newer generations). */
+  topic?: string;
+};
+
 
 export const getLatestQuiz = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
