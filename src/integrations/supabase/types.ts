@@ -180,6 +180,50 @@ export type Database = {
           },
         ]
       }
+      concept_performance: {
+        Row: {
+          attempts: number
+          correct: number
+          created_at: string
+          document_id: string | null
+          id: string
+          last_seen_at: string
+          source: string
+          topic: string
+          user_id: string
+        }
+        Insert: {
+          attempts?: number
+          correct?: number
+          created_at?: string
+          document_id?: string | null
+          id?: string
+          last_seen_at?: string
+          source?: string
+          topic: string
+          user_id: string
+        }
+        Update: {
+          attempts?: number
+          correct?: number
+          created_at?: string
+          document_id?: string | null
+          id?: string
+          last_seen_at?: string
+          source?: string
+          topic?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "concept_performance_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       document_artifacts: {
         Row: {
           content: Json
@@ -472,6 +516,44 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      quiz_attempts: {
+        Row: {
+          correct: number
+          created_at: string
+          document_id: string | null
+          duration_seconds: number
+          id: string
+          total: number
+          user_id: string
+        }
+        Insert: {
+          correct: number
+          created_at?: string
+          document_id?: string | null
+          duration_seconds?: number
+          id?: string
+          total: number
+          user_id: string
+        }
+        Update: {
+          correct?: number
+          created_at?: string
+          document_id?: string | null
+          duration_seconds?: number
+          id?: string
+          total?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_attempts_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       quizzes: {
         Row: {

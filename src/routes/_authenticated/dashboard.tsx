@@ -12,10 +12,13 @@ import {
   LineChart,
   ArrowRight,
   Sparkles,
+  Target,
+  ListChecks,
 } from "lucide-react";
 
 import { listDocuments } from "@/lib/documents.functions";
 import { listGoals, getProgress } from "@/lib/study.functions";
+import { getWeakAreas, type WeakArea } from "@/lib/performance.functions";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -60,6 +63,11 @@ function DashboardHome() {
   });
   const { data: goals } = useQuery({ queryKey: ["study-goals"], queryFn: () => goalsFn() });
   const { data: progress } = useQuery({ queryKey: ["progress"], queryFn: () => progressFn() });
+  const weakFn = useServerFn(getWeakAreas);
+  const { data: weakAreas, isLoading: weakLoading } = useQuery({
+    queryKey: ["weak-areas"],
+    queryFn: () => weakFn(),
+  });
 
   const documents = (docs ?? []) as Array<{ id: string; title: string; updated_at: string }>;
   const tasks = ((goals ?? []) as Array<{ id: string; title: string; due_date: string; completed: boolean }>)
@@ -175,6 +183,16 @@ function DashboardHome() {
           </CardContent>
         </Card>
 
+        <div className="space-y-6 lg:col-span-2">
+          <TodaysPlan
+            weakAreas={(weakAreas ?? []) as WeakArea[]}
+            openTasks={tasks.length}
+            hasDocuments={documents.length > 0}
+            topDocumentId={documents[0]?.id}
+          />
+          <WeakAreas areas={(weakAreas ?? []) as WeakArea[]} loading={weakLoading} />
+        </div>
+
         <div className="space-y-6">
           <Card>
             <CardHeader>
@@ -212,6 +230,112 @@ function DashboardHome() {
         </div>
       </div>
     </div>
+  );
+}
+
+/**
+ * "What should I do next" — built only from real signals: weak concepts,
+ * open planner tasks and whether any material exists yet.
+ */
+function TodaysPlan({
+  weakAreas,
+  openTasks,
+  hasDocuments,
+  topDocumentId,
+}: {
+  weakAreas: WeakArea[];
+  openTasks: number;
+  hasDocuments: boolean;
+  topDocumentId?: string;
+}) {
+  const needsReview = weakAreas.filter((w) => w.status !== "strong");
+
+  const items: Array<{ label: string; minutes: number; to: string; params?: Record<string, string> }> = [];
+  if (!hasDocuments) {
+    items.push({ label: "Upload your first study material", minutes: 5, to: "/documents" });
+  } else if (topDocumentId) {
+    items.push({
+      label: needsReview.length
+        ? `Re-practise ${needsReview[0].topic}`
+        : "Take a quiz on your latest material",
+      minutes: 15,
+      to: "/documents/$documentId",
+      params: { documentId: needsReview[0]?.documentId ?? topDocumentId },
+    });
+  }
+  if (openTasks > 0) items.push({ label: `Clear ${openTasks} planner task${openTasks === 1 ? "" : "s"}`, minutes: 20, to: "/planner" });
+  items.push({ label: "Run one focused Pomodoro", minutes: 25, to: "/progress" });
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base flex items-center gap-2">
+          <ListChecks className="h-4 w-4 text-primary" aria-hidden /> Today&apos;s study plan
+        </CardTitle>
+        <CardDescription>The next few things worth doing, in order.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        {items.map((item, i) => (
+          <Link
+            key={item.label}
+            to={item.to}
+            params={item.params as never}
+            className="flex items-center justify-between gap-3 rounded-xl border border-border px-3 py-2.5 hover:bg-accent/50 transition-colors"
+          >
+            <span className="flex items-center gap-3 min-w-0">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                {i + 1}
+              </span>
+              <span className="truncate text-sm">{item.label}</span>
+            </span>
+            <span className="text-xs text-muted-foreground shrink-0">{item.minutes} min</span>
+          </Link>
+        ))}
+      </CardContent>
+    </Card>
+  );
+}
+
+/** Honest weak areas: only shown once real quiz/flashcard data exists. */
+function WeakAreas({ areas, loading }: { areas: WeakArea[]; loading: boolean }) {
+  const shown = areas.filter((a) => a.status !== "strong").slice(0, 5);
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base flex items-center gap-2">
+          <Target className="h-4 w-4 text-primary" aria-hidden /> Weak areas
+        </CardTitle>
+        <CardDescription>Based on your actual quiz and flashcard answers.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        {loading && <div className="h-16 rounded-xl bg-muted/40 animate-pulse" aria-hidden />}
+        {!loading && shown.length === 0 && (
+          <p className="text-sm text-muted-foreground">
+            Nothing flagged yet. Take a quiz or run a flashcard deck and your weak concepts will show up here.
+          </p>
+        )}
+        {shown.map((a) => (
+          <div key={`${a.documentId}-${a.topic}`} className="rounded-xl border border-border px-3 py-2">
+            <div className="flex items-center justify-between gap-3">
+              <span className="truncate text-sm font-medium">{a.topic}</span>
+              <span
+                className={
+                  a.status === "needs_review"
+                    ? "shrink-0 rounded-full bg-destructive/10 px-2 py-0.5 text-xs text-destructive"
+                    : "shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary"
+                }
+              >
+                {a.status === "needs_review" ? "Needs review" : "Improving"}
+              </span>
+            </div>
+            <div className="mt-1 text-xs text-muted-foreground">
+              {a.correct}/{a.attempts} correct
+              {a.documentTitle ? ` · ${a.documentTitle}` : ""}
+            </div>
+          </div>
+        ))}
+      </CardContent>
+    </Card>
   );
 }
 
