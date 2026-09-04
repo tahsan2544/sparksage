@@ -19,6 +19,7 @@ import {
   type Flashcard,
 } from "@/lib/documents.functions";
 import { logSession } from "@/lib/study.functions";
+import { recordQuizAttempt, recordFlashcardRun } from "@/lib/performance.functions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -164,6 +165,7 @@ function QuizPanel({ documentId }: { documentId: string }) {
   const getFn = useServerFn(getLatestQuiz);
   const genFn = useServerFn(generateQuiz);
   const logFn = useServerFn(logSession);
+  const recordFn = useServerFn(recordQuizAttempt);
   const qc = useQueryClient();
   const [busy, setBusy] = useState(false);
   const [answers, setAnswers] = useState<Record<number, number>>({});
@@ -209,7 +211,22 @@ function QuizPanel({ documentId }: { documentId: string }) {
           note: `Quiz: ${correct}/${questions.length}`,
         },
       });
+      // Per-concept results power the dashboard's honest "weak areas" list.
+      await recordFn({
+        data: {
+          documentId,
+          total: questions.length,
+          correct,
+          durationSeconds: Math.min(elapsed, 30 * 60),
+          results: questions.map((q, i) => ({
+            topic: (q.topic || q.question).slice(0, 80),
+            correct: answers[i] === q.answerIndex,
+          })),
+        },
+      });
       qc.invalidateQueries({ queryKey: ["progress"] });
+      qc.invalidateQueries({ queryKey: ["weak-areas"] });
+      qc.invalidateQueries({ queryKey: ["quiz-history"] });
     } catch {
       // silent — quiz feedback still works even if logging fails
     }
@@ -328,6 +345,7 @@ function FlashcardsPanel({ documentId }: { documentId: string }) {
   const getFn = useServerFn(getLatestDeck);
   const genFn = useServerFn(generateFlashcards);
   const logFn = useServerFn(logSession);
+  const recordFn = useServerFn(recordFlashcardRun);
   const qc = useQueryClient();
   const [busy, setBusy] = useState(false);
   const [order, setOrder] = useState<number[]>([]);
@@ -424,6 +442,20 @@ function FlashcardsPanel({ documentId }: { documentId: string }) {
     })
       .then(() => qc.invalidateQueries({ queryKey: ["progress"] }))
       .catch(() => {});
+
+    // Each card's front doubles as its concept label for weak-area tracking.
+    recordFn({
+      data: {
+        documentId,
+        results: cards.map((c, i) => ({
+          topic: c.front.slice(0, 80),
+          correct: known.has(i),
+        })),
+      },
+    })
+      .then(() => qc.invalidateQueries({ queryKey: ["weak-areas"] }))
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [done, loggedRun, startedAt, total, known.size, documentId, logFn, qc]);
 
   return (
