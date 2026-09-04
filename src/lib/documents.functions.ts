@@ -306,7 +306,7 @@ export const generateQuiz = createServerFn({ method: "POST" })
         {
           role: "system",
           content:
-            "You create high-quality multiple-choice study quizzes. Reply with strict JSON only, matching this shape: {\"questions\":[{\"question\":string,\"choices\":[string,string,string,string],\"answerIndex\":number,\"explanation\":string}]}. Each question must have exactly 4 choices and answerIndex must be 0-3." +
+            "You create high-quality multiple-choice study quizzes. Reply with strict JSON only, matching this shape: {\"questions\":[{\"question\":string,\"choices\":[string,string,string,string],\"answerIndex\":number,\"explanation\":string,\"topic\":string}]}. Each question must have exactly 4 choices and answerIndex must be 0-3. \"topic\" is a 1-4 word concept label taken from the document (e.g. \"Mitosis phases\") so the student's weak areas can be tracked; reuse the same label for questions about the same concept." +
             persona,
         },
 
