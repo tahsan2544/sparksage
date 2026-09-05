@@ -124,7 +124,14 @@ export const listMessages = createServerFn({ method: "GET" })
 export const sendMessage = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
-    z.object({ threadId: uuid, content: z.string().trim().min(1).max(4000) }).parse(d),
+    z
+      .object({
+        threadId: uuid,
+        content: z.string().trim().min(1).max(4000),
+        /** "answer" explains directly; "socratic" is Teach-Me mode. */
+        mode: z.enum(["answer", "socratic"]).default("answer"),
+      })
+      .parse(d),
   )
   .handler(async ({ data, context }) => {
     const { enforceLimit, recordUsage } = await import("@/lib/limits.server");
@@ -162,10 +169,34 @@ export const sendMessage = createServerFn({ method: "POST" })
       .single();
     if (uErr) throw new Error(uErr.message);
 
-    const { callAI, trimDoc } = await import("@/lib/ai.server");
+    const { callAI } = await import("@/lib/ai.server");
     const { personaPrompt } = await import("@/lib/persona.server");
+    const { retrievePassages, formatSources, sourceExcerpts } = await import("@/lib/retrieval.server");
     const persona = await personaPrompt(context.supabase, context.userId);
-    const systemPrompt = `You are a helpful study assistant answering questions about a specific document.\nAlways ground your answer in the document. If the document does not contain the answer, say so plainly.\n\nDocument title: ${doc.title}\n---\n${trimDoc(doc.content)}\n---${persona}`;
+
+    // Retrieve only the passages that matter for this question, and make the
+    // model cite them so the student can verify every claim.
+    const passages = retrievePassages(doc.content, data.content, 6);
+    const sources = sourceExcerpts(passages);
+
+    const modeRule =
+      data.mode === "socratic"
+        ? `TEACH-ME MODE: do not hand over the full answer. Guide the student with one short explanation step plus one focused question at a time, building on what they already said. Confirm and summarise only once they have reasoned it out.`
+        : `Explain clearly and step by step, using short paragraphs and lists.`;
+
+    const systemPrompt = `You are SparkSage, a study tutor answering questions about one specific document.
+
+RULES
+- Answer ONLY from the numbered excerpts below. Never use outside knowledge as if it came from the document.
+- Cite the excerpt you used inline, like [1] or [2], after each claim.
+- If the excerpts do not contain the answer, say plainly: "That isn't covered in this document." Then, clearly labelled as general knowledge, you may add a brief note — never a citation.
+- Never invent quotes, numbers or page references.
+- ${modeRule}
+
+Document title: ${doc.title}
+
+EXCERPTS
+${formatSources(passages)}${persona}`;
 
     const messages = [
       { role: "system" as const, content: systemPrompt },
@@ -197,7 +228,7 @@ export const sendMessage = createServerFn({ method: "POST" })
       await context.supabase.from("chat_threads").update({ title }).eq("id", thread.id);
     }
 
-    return { userMessage: userRow, assistantMessage: aiRow };
+    return { userMessage: userRow, assistantMessage: aiRow, sources };
   });
 
 // ---------- AI: summary, quiz, flashcards ----------
