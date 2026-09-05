@@ -20,6 +20,7 @@ import {
 import { getProgress, logSession } from "@/lib/study.functions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { getQuizHistory } from "@/lib/performance.functions";
 
 export const Route = createFileRoute("/_authenticated/progress")({
   head: () => ({
@@ -48,6 +49,11 @@ function ProgressPage() {
   const { data, isLoading, error } = useQuery({
     queryKey: ["progress"],
     queryFn: () => fetchProgress(),
+  });
+  const fetchHistory = useServerFn(getQuizHistory);
+  const { data: quizHistory } = useQuery({
+    queryKey: ["quiz-history"],
+    queryFn: () => fetchHistory(),
   });
 
   return (
@@ -110,6 +116,31 @@ function ProgressPage() {
               <MaterialRow icon={<BookOpen className="h-4 w-4" />} label="Documents" value={data?.counts.documents ?? 0} />
               <MaterialRow icon={<ListChecks className="h-4 w-4" />} label="Quizzes" value={data?.counts.quizzes ?? 0} />
               <MaterialRow icon={<Layers className="h-4 w-4" />} label="Flashcard decks" value={data?.counts.decks ?? 0} />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Recent quiz scores</CardTitle>
+              <CardDescription>Your last ten graded quizzes.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm">
+              {(quizHistory ?? []).length === 0 && (
+                <p className="text-muted-foreground">
+                  No graded quizzes yet — finish one from a document to see your scores here.
+                </p>
+              )}
+              {(quizHistory ?? []).map((q) => {
+                const pct = Math.round((q.correct / q.total) * 100);
+                return (
+                  <div key={q.id} className="flex items-center justify-between gap-3">
+                    <span className="truncate text-muted-foreground">{q.documentTitle}</span>
+                    <span className="shrink-0 font-medium">
+                      {q.correct}/{q.total} · {pct}%
+                    </span>
+                  </div>
+                );
+              })}
             </CardContent>
           </Card>
         </div>
