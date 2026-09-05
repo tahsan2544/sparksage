@@ -110,6 +110,8 @@ function Dashboard() {
 
       </div>
 
+      <UploadDropzone />
+
       {processing && (
         <div className="mb-6 rounded-3xl border border-border bg-card p-4 text-sm">
           <p className="font-medium">Processing {processing}…</p>
