@@ -15,7 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChevronLeft, MessageSquare, Plus, Send, Trash2 } from "lucide-react";
+import { ChevronLeft, MessageSquare, Plus, Send, Trash2, BookOpen, GraduationCap } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/documents/$documentId/chat/$threadId")({
   head: () => ({
@@ -45,6 +45,10 @@ function ChatPage() {
 
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
+  /** Teach-Me mode: the tutor guides with questions instead of giving answers. */
+  const [teachMe, setTeachMe] = useState(false);
+  /** Excerpts backing the most recent answer, so claims can be verified. */
+  const [sources, setSources] = useState<Array<{ index: number; excerpt: string }>>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -68,7 +72,8 @@ function ChatPage() {
       { id: `tmp-${Date.now()}`, role: "user", content: text, created_at: new Date().toISOString() },
     ]);
     try {
-      await send({ data: { threadId, content: text } });
+      const res = await send({ data: { threadId, content: text, mode: teachMe ? "socratic" : "answer" } });
+      setSources(res.sources ?? []);
       qc.invalidateQueries({ queryKey: ["messages", threadId] });
       qc.invalidateQueries({ queryKey: ["threads", documentId] });
     } catch (err) {
@@ -111,8 +116,13 @@ function ChatPage() {
                   Ask anything about “{doc?.title ?? "this document"}”.
                 </div>
               )}
-              {messages?.map((m) => (
-                <MessageBubble key={m.id} role={m.role} content={m.content} />
+              {messages?.map((m, i) => (
+                <div key={m.id} className="space-y-2">
+                  <MessageBubble role={m.role} content={m.content} />
+                  {m.role === "assistant" && i === messages.length - 1 && sources.length > 0 && (
+                    <SourceList sources={sources} />
+                  )}
+                </div>
               ))}
               {busy && (
                 <div className="flex justify-start">
@@ -127,7 +137,28 @@ function ChatPage() {
               )}
             </div>
 
-            <form onSubmit={onSend} className="border-t border-border p-3 flex items-end gap-2">
+            <div className="border-t border-border px-3 pt-3">
+              <button
+                type="button"
+                onClick={() => setTeachMe((v) => !v)}
+                aria-pressed={teachMe}
+                className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs transition-colors ${
+                  teachMe
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border text-muted-foreground hover:bg-accent/50"
+                }`}
+              >
+                <GraduationCap className="h-3.5 w-3.5" aria-hidden />
+                Teach-me mode {teachMe ? "on" : "off"}
+              </button>
+              <p className="mt-1.5 text-xs text-muted-foreground">
+                {teachMe
+                  ? "The tutor will guide you with questions instead of handing over the answer."
+                  : "Answers are drawn only from this document, with the exact excerpts shown."}
+              </p>
+            </div>
+
+            <form onSubmit={onSend} className="p-3 flex items-end gap-2">
               <Textarea
                 ref={inputRef}
                 value={input}
@@ -166,6 +197,25 @@ function MessageBubble({ role, content }: { role: string; content: string }) {
       >
         {content}
       </div>
+    </div>
+  );
+}
+
+/** The document excerpts an answer was built from. */
+function SourceList({ sources }: { sources: Array<{ index: number; excerpt: string }> }) {
+  return (
+    <div className="max-w-[85%] rounded-2xl border border-border bg-card p-3">
+      <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        <BookOpen className="h-3.5 w-3.5" aria-hidden /> Sources from this document
+      </div>
+      <ul className="mt-2 space-y-2">
+        {sources.map((s) => (
+          <li key={s.index} className="text-xs text-muted-foreground">
+            <span className="mr-1 font-semibold text-primary">[{s.index}]</span>
+            {s.excerpt}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
