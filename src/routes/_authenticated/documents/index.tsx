@@ -36,6 +36,7 @@ import { consumePendingUpload, type PendingUpload } from "@/lib/pending-upload";
 import { extractText, DOCUMENT_ACCEPT } from "@/lib/extract-text";
 import { readImageText } from "@/lib/extract.functions";
 import { SAMPLE_COURSE_TITLE, SAMPLE_COURSE_CONTENT } from "@/lib/sample-course";
+import { UploadDropzone } from "@/components/upload-dropzone";
 
 export const Route = createFileRoute("/_authenticated/documents/")({
   head: () => ({
