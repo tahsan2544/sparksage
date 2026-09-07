@@ -12,6 +12,7 @@ import {
   SlidersHorizontal,
   Sparkles,
   Gauge,
+  Brain,
   Megaphone,
   Inbox,
 } from "lucide-react";
@@ -35,6 +36,7 @@ export type NavTarget =
   | "/chat"
   | "/planner"
   | "/progress"
+  | "/review"
   | "/settings"
   | "/admin"
   | "/owner"
@@ -47,6 +49,7 @@ const studyItems: { title: string; url: NavTarget; icon: typeof FileText }[] = [
   { title: "Documents", url: "/documents", icon: FileText },
   { title: "Chat with AI", url: "/chat", icon: MessagesSquare },
   { title: "Study planner", url: "/planner", icon: CalendarDays },
+  { title: "Daily review", url: "/review", icon: Brain },
   { title: "Progress", url: "/progress", icon: LineChart },
 ];
 
