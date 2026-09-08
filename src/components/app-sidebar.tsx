@@ -13,6 +13,7 @@ import {
   Sparkles,
   Gauge,
   Brain,
+  GraduationCap,
   Megaphone,
   Inbox,
 } from "lucide-react";
@@ -37,6 +38,7 @@ export type NavTarget =
   | "/planner"
   | "/progress"
   | "/review"
+  | "/exam"
   | "/settings"
   | "/admin"
   | "/owner"
@@ -50,6 +52,7 @@ const studyItems: { title: string; url: NavTarget; icon: typeof FileText }[] = [
   { title: "Chat with AI", url: "/chat", icon: MessagesSquare },
   { title: "Study planner", url: "/planner", icon: CalendarDays },
   { title: "Daily review", url: "/review", icon: Brain },
+  { title: "Exam prep", url: "/exam", icon: GraduationCap },
   { title: "Progress", url: "/progress", icon: LineChart },
 ];
 

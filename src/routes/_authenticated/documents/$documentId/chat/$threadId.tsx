@@ -12,6 +12,7 @@ import {
   createThread,
   deleteThread,
 } from "@/lib/documents.functions";
+import { Typewriter } from "@/components/typewriter";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -49,6 +50,8 @@ function ChatPage() {
   const [teachMe, setTeachMe] = useState(false);
   /** Excerpts backing the most recent answer, so claims can be verified. */
   const [sources, setSources] = useState<Array<{ index: number; excerpt: string }>>([]);
+  // Only the answer that just arrived types itself out; history renders instantly.
+  const [lastAnswerId, setLastAnswerId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -74,6 +77,7 @@ function ChatPage() {
     try {
       const res = await send({ data: { threadId, content: text, mode: teachMe ? "socratic" : "answer" } });
       setSources(res.sources ?? []);
+      setLastAnswerId(res.assistantMessage?.id ?? null);
       qc.invalidateQueries({ queryKey: ["messages", threadId] });
       qc.invalidateQueries({ queryKey: ["threads", documentId] });
     } catch (err) {
@@ -118,7 +122,12 @@ function ChatPage() {
               )}
               {messages?.map((m, i) => (
                 <div key={m.id} className="space-y-2">
-                  <MessageBubble role={m.role} content={m.content} />
+                  <MessageBubble
+                    role={m.role}
+                    content={m.content}
+                    animate={m.role === "assistant" && i === messages.length - 1 && m.id === lastAnswerId}
+                    onTick={() => scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight })}
+                  />
                   {m.role === "assistant" && i === messages.length - 1 && sources.length > 0 && (
                     <SourceList sources={sources} />
                   )}
@@ -186,7 +195,17 @@ function ChatPage() {
   );
 }
 
-function MessageBubble({ role, content }: { role: string; content: string }) {
+function MessageBubble({
+  role,
+  content,
+  animate = false,
+  onTick,
+}: {
+  role: string;
+  content: string;
+  animate?: boolean;
+  onTick?: () => void;
+}) {
   const isUser = role === "user";
   return (
     <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
@@ -195,7 +214,7 @@ function MessageBubble({ role, content }: { role: string; content: string }) {
           isUser ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"
         }`}
       >
-        {content}
+        {isUser ? content : <Typewriter text={content} animate={animate} onTick={onTick} />}
       </div>
     </div>
   );
