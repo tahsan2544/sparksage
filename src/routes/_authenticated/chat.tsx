@@ -5,12 +5,15 @@ import { useServerFn } from "@tanstack/react-start";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
 import { askTutor } from "@/lib/chat.functions";
+import { listDocuments } from "@/lib/documents.functions";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { FileText, ImageIcon, Paperclip, Send, Sparkles, Video, X } from "lucide-react";
+import { Typewriter } from "@/components/typewriter";
+import { BookOpen, FileText, ImageIcon, Mic, MicOff, Paperclip, Send, Sparkles, Video, Volume2, X } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/chat")({
   head: () => ({
@@ -57,11 +60,25 @@ interface Attachment {
   previewUrl?: string;
 }
 
+interface Source {
+  index: number;
+  documentTitle: string;
+  excerpt: string;
+}
+
 interface ChatTurn {
   id: string;
   role: "user" | "assistant";
   content: string;
   files?: { name: string; kind: Kind; previewUrl?: string }[];
+  sources?: Source[];
+}
+
+/** Browser speech recognition, where the browser supports it. */
+function getSpeechRecognition(): any {
+  if (typeof window === "undefined") return null;
+  const w = window as any;
+  return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
 }
 
 function kindOf(file: File): Kind {
@@ -85,13 +102,76 @@ function ChatWithAI() {
   const [files, setFiles] = useState<Attachment[]>([]);
   const [busy, setBusy] = useState(false);
   const [dragging, setDragging] = useState(false);
+  const [selectedDocs, setSelectedDocs] = useState<string[]>([]);
+  const [showSources, setShowSources] = useState(false);
+  const [listening, setListening] = useState(false);
+  const [speechSupported, setSpeechSupported] = useState(false);
+  const recognitionRef = useRef<any>(null);
+  const lastAssistantId = [...turns].reverse().find((t) => t.role === "assistant")?.id;
+  const documents = useQuery({ queryKey: ["documents"], queryFn: () => listDocuments() });
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     inputRef.current?.focus();
+    setSpeechSupported(Boolean(getSpeechRecognition()));
+    return () => {
+      recognitionRef.current?.stop?.();
+      if (typeof window !== "undefined") window.speechSynthesis?.cancel();
+    };
   }, []);
+
+  /** Dictate a question instead of typing it. */
+  function toggleDictation() {
+    if (listening) {
+      recognitionRef.current?.stop?.();
+      setListening(false);
+      return;
+    }
+    const Recognition = getSpeechRecognition();
+    if (!Recognition) {
+      toast.error("Your browser can't listen for speech. Try Chrome or Edge.");
+      return;
+    }
+    const recognition = new Recognition();
+    recognition.lang = navigator.language || "en-US";
+    recognition.interimResults = true;
+    recognition.continuous = false;
+    let final = "";
+    recognition.onresult = (event: any) => {
+      let interim = "";
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const chunk = event.results[i][0].transcript;
+        if (event.results[i].isFinal) final += chunk;
+        else interim += chunk;
+      }
+      setInput((final + interim).trim());
+    };
+    recognition.onerror = () => {
+      setListening(false);
+      toast.error("We couldn't hear you. Check your microphone and try again.");
+    };
+    recognition.onend = () => setListening(false);
+    recognitionRef.current = recognition;
+    recognition.start();
+    setListening(true);
+  }
+
+  /** Read an answer out loud, or stop if it's already speaking. */
+  function speak(text: string) {
+    if (typeof window === "undefined" || !window.speechSynthesis) {
+      toast.error("Your browser can't read answers out loud.");
+      return;
+    }
+    if (window.speechSynthesis.speaking) {
+      window.speechSynthesis.cancel();
+      return;
+    }
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = navigator.language || "en-US";
+    window.speechSynthesis.speak(utterance);
+  }
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -184,10 +264,11 @@ function ChatWithAI() {
     setFiles([]);
     setBusy(true);
     try {
-      const { answer } = await ask({
+      const { answer, sources } = await ask({
         data: {
           message: text,
           history,
+          documentIds: selectedDocs,
           attachments: attached.map((f) => ({
             name: f.name,
             mime: f.mime,
@@ -197,7 +278,10 @@ function ChatWithAI() {
           })),
         },
       });
-      setTurns((prev) => [...prev, { id: `a-${Date.now()}`, role: "assistant", content: answer }]);
+      setTurns((prev) => [
+        ...prev,
+        { id: `a-${Date.now()}`, role: "assistant", content: answer, sources: sources ?? [] },
+      ]);
     } catch (err) {
       // A network-layer failure (usually an oversized attachment payload)
       // surfaces as "Failed to fetch"; give students something actionable.
@@ -225,6 +309,58 @@ function ChatWithAI() {
           Ask anything and attach documents, images or videos. You need an internet connection — everything runs in the
           cloud.
         </p>
+      </div>
+
+      <div className="mb-3">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => setShowSources((v) => !v)}
+          aria-expanded={showSources}
+        >
+          <BookOpen className="h-4 w-4" />
+          {selectedDocs.length === 0
+            ? "Study sources: general chat"
+            : `Study sources: ${selectedDocs.length} document${selectedDocs.length === 1 ? "" : "s"}`}
+        </Button>
+        {showSources && (
+          <div className="mt-2 rounded-2xl border border-border p-3">
+            <p className="text-xs text-muted-foreground mb-2">
+              Pick the materials the tutor should answer from. With none selected it answers from general knowledge.
+            </p>
+            {documents.isLoading && <p className="text-sm text-muted-foreground">Loading your documents…</p>}
+            {documents.data?.length === 0 && (
+              <p className="text-sm text-muted-foreground">You haven't uploaded any documents yet.</p>
+            )}
+            <div className="flex flex-wrap gap-2">
+              {documents.data?.map((doc) => {
+                const active = selectedDocs.includes(doc.id);
+                return (
+                  <Button
+                    key={doc.id}
+                    type="button"
+                    size="sm"
+                    variant={active ? "default" : "outline"}
+                    aria-pressed={active}
+                    onClick={() =>
+                      setSelectedDocs((prev) =>
+                        active ? prev.filter((id) => id !== doc.id) : [...prev, doc.id].slice(0, 10),
+                      )
+                    }
+                  >
+                    {doc.title}
+                  </Button>
+                );
+              })}
+            </div>
+            {selectedDocs.length > 0 && (
+              <Button type="button" variant="ghost" size="sm" className="mt-2" onClick={() => setSelectedDocs([])}>
+                Clear selection
+              </Button>
+            )}
+          </div>
+        )}
       </div>
 
       <Card
@@ -302,7 +438,45 @@ function ChatWithAI() {
                       ))}
                     </div>
                   )}
-                  {t.content}
+                  {t.role === "assistant" ? (
+                    <Typewriter
+                      text={t.content}
+                      animate={t.id === lastAssistantId}
+                      onTick={() => scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight })}
+                    />
+                  ) : (
+                    t.content
+                  )}
+                  {t.role === "assistant" && (
+                    <div className="mt-2 space-y-2">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 px-2 text-xs"
+                        onClick={() => speak(t.content)}
+                      >
+                        <Volume2 className="h-3.5 w-3.5" /> Read aloud
+                      </Button>
+                      {t.sources && t.sources.length > 0 && (
+                        <div className="rounded-2xl bg-background/60 p-2">
+                          <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                            Sources
+                          </p>
+                          <ol className="mt-1 space-y-1">
+                            {t.sources.map((s) => (
+                              <li key={s.index} className="text-xs text-muted-foreground">
+                                <span className="font-medium text-foreground">
+                                  [{s.index}] {s.documentTitle}
+                                </span>{" "}
+                                {s.excerpt}
+                              </li>
+                            ))}
+                          </ol>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </motion.div>
             ))}
@@ -375,6 +549,18 @@ function ChatWithAI() {
             >
               <Paperclip className="h-4 w-4" />
             </Button>
+            <Button
+              type="button"
+              variant={listening ? "default" : "outline"}
+              size="icon"
+              onClick={toggleDictation}
+              disabled={!speechSupported}
+              aria-pressed={listening}
+              aria-label={listening ? "Stop listening" : "Ask by voice"}
+              title={speechSupported ? "Ask by voice" : "Voice input isn't available in this browser"}
+            >
+              {listening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+            </Button>
             <Textarea
               ref={inputRef}
               value={input}
@@ -385,7 +571,7 @@ function ChatWithAI() {
                   onSend();
                 }
               }}
-              placeholder="Ask your tutor anything, or drop files here…"
+              placeholder={listening ? "Listening… speak your question" : "Ask your tutor anything, or drop files here…"}
               rows={2}
               maxLength={8000}
               className="resize-none"

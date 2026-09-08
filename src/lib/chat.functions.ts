@@ -23,6 +23,8 @@ const inputSchema = z.object({
   message: z.string().trim().max(8_000),
   history: z.array(turnSchema).max(40).default([]),
   attachments: z.array(attachmentSchema).max(6).default([]),
+  /** Optional study space: answer from these uploaded documents. */
+  documentIds: z.array(z.string().uuid()).max(10).default([]),
 });
 
 const SYSTEM_PROMPT = `You are SparkSage AI, a warm and encouraging study tutor.
@@ -46,6 +48,36 @@ export const askTutor = createServerFn({ method: "POST" })
 
     const { enforceLimit, recordUsage } = await import("@/lib/limits.server");
     await enforceLimit(context.supabase, context.userId, "ai_chat_messages_per_day");
+
+    // Study space: pull the relevant passages out of the selected documents so
+    // the tutor answers from the student's own material and can show sources.
+    let grounding = "";
+    const sources: Array<{ index: number; documentTitle: string; excerpt: string }> = [];
+    if (data.documentIds.length > 0) {
+      const { data: docs } = await context.supabase
+        .from("documents")
+        .select("id, title, content")
+        .in("id", data.documentIds);
+      const { retrievePassages } = await import("@/lib/retrieval.server");
+      const perDoc = Math.max(2, Math.floor(8 / Math.max(1, (docs ?? []).length)));
+      const blocks: string[] = [];
+      for (const doc of docs ?? []) {
+        const passages = retrievePassages(doc.content ?? "", data.message, perDoc);
+        for (const p of passages) {
+          const index = sources.length + 1;
+          sources.push({
+            index,
+            documentTitle: doc.title,
+            excerpt:
+              p.text.replace(/\s+/g, " ").slice(0, 220).trim() + (p.text.length > 220 ? "…" : ""),
+          });
+          blocks.push(`[${index}] (${doc.title}) ${p.text}`);
+        }
+      }
+      grounding = blocks.length
+        ? `\n\nSTUDY SPACE RULES\nAnswer from the numbered excerpts below, taken from the student's own materials. Cite them inline like [1] or [2]. If the excerpts do not cover the question, say "That isn't covered in your selected materials." and only then add clearly labelled general knowledge. Never invent quotes, numbers or page references.\n\nEXCERPTS\n${blocks.join("\n\n")}`
+        : "\n\nThe student selected materials, but nothing relevant was found in them. Say so plainly before answering from general knowledge.";
+    }
 
     const { callAI } = await import("@/lib/ai.server");
     const parts: import("@/lib/ai.server").ContentPart[] = [];
@@ -76,7 +108,7 @@ export const askTutor = createServerFn({ method: "POST" })
     const answer = await callAI({
       model: "google/gemini-3.6-flash",
       messages: [
-        { role: "system", content: SYSTEM_PROMPT + persona },
+        { role: "system", content: SYSTEM_PROMPT + grounding + persona },
         ...data.history.map((m) => ({ role: m.role, content: m.content })),
         { role: "user", content: parts },
       ],
@@ -84,5 +116,5 @@ export const askTutor = createServerFn({ method: "POST" })
 
 
     await recordUsage(context.userId, "ai_chat_messages_per_day");
-    return { answer };
+    return { answer, sources };
   });

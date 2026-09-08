@@ -208,7 +208,7 @@ function Landing() {
           <a href="#features" className="hover:text-foreground">Features</a>
           <a href="#how" className="hover:text-foreground">How it works</a>
           <a href="#faq" className="hover:text-foreground">FAQ</a>
-          <a href="#faq" className="hover:text-foreground">FAQ</a>
+
         </nav>
         <div className="flex items-center gap-2">
           <ThemeToggle />
