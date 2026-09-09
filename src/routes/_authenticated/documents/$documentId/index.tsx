@@ -29,14 +29,26 @@ import { DocumentStudio } from "@/components/document-studio";
 
 
 export const Route = createFileRoute("/_authenticated/documents/$documentId/")({
-  head: ({ params }) => ({
-    meta: [
-      { title: "Document — SparkSage" },
-      { name: "description", content: `Study workspace for document ${params.documentId}.` },
-    ],
-  }),
+  head: ({ params }) => {
+    const title = `Study workspace ${params.documentId.slice(0, 8)} — SparkSage`;
+    const description = `Summaries, quizzes, flashcards and AI chat for study document ${params.documentId.slice(0, 8)} in SparkSage.`;
+    const url = `https://sparksage.lovable.app/documents/${params.documentId}`;
+    return {
+      meta: [
+        { title },
+        { name: "description", content: description },
+        { property: "og:title", content: title },
+        { property: "og:description", content: description },
+        { property: "og:url", content: url },
+        { property: "og:type", content: "article" },
+        { name: "twitter:card", content: "summary" },
+        { name: "robots", content: "noindex" },
+      ],
+    };
+  },
   component: DocumentPage,
 });
+
 
 function DocumentPage() {
   const { documentId } = Route.useParams();
