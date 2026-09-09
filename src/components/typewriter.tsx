@@ -14,7 +14,18 @@ interface TypewriterProps {
   className?: string;
 }
 
-export function Typewriter({ text, animate = true, speed = 220, onTick, className }: TypewriterProps) {
+/** Strip the markdown markers the model sometimes emits so plain text reads cleanly. */
+function tidy(raw: string) {
+  return raw
+    .replace(/^\s*(\*\s*){3,}$/gm, "———")
+    .replace(/^\s*#{1,6}\s+/gm, "")
+    .replace(/\*\*(.+?)\*\*/g, "$1")
+    .replace(/(^|\s)\*(\S[^*]*?)\*(?=\s|$)/g, "$1$2")
+    .replace(/^\s*[-*]\s+/gm, "• ");
+}
+
+export function Typewriter({ text: raw, animate = true, speed = 110, onTick, className }: TypewriterProps) {
+  const text = tidy(raw);
   const [shown, setShown] = useState(() => (animate ? "" : text));
   const tickRef = useRef(onTick);
   tickRef.current = onTick;
