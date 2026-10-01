@@ -4,7 +4,7 @@
 //  3. at question time, embed the query and run hybrid (semantic + keyword)
 //     search across the selected documents, returning numbered sources.
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { chunkDocument } from "@/lib/retrieval.server";
+import { chunkDocument } from "./retrieval.server";
 
 const EMBED_URL = "https://ai.gateway.lovable.dev/v1/embeddings";
 const EMBED_MODEL = "google/gemini-embedding-2";
