@@ -4,13 +4,14 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { imageOrPdfDataUrl } from "@/lib/data-url";
 
 /** An attachment forwarded from the browser as a base64 data URL. */
 const attachmentSchema = z.object({
   name: z.string().min(1).max(200),
   mime: z.string().min(1).max(120),
   /** `data:<mime>;base64,...` — omitted for files we cannot send to the model. */
-  dataUrl: z.string().max(14_000_000).optional(),
+  dataUrl: imageOrPdfDataUrl(14_000_000).optional(),
   kind: z.enum(["image", "document", "video", "other"]),
 });
 
@@ -52,31 +53,24 @@ export const askTutor = createServerFn({ method: "POST" })
     // Study space: pull the relevant passages out of the selected documents so
     // the tutor answers from the student's own material and can show sources.
     let grounding = "";
-    const sources: Array<{ index: number; documentTitle: string; excerpt: string }> = [];
+    let sources: Array<{ index: number; documentTitle: string; excerpt: string }> = [];
     if (data.documentIds.length > 0) {
-      const { data: docs } = await context.supabase
-        .from("documents")
-        .select("id, title, content")
-        .in("id", data.documentIds);
-      const { retrievePassages } = await import("@/lib/retrieval.server");
-      const perDoc = Math.max(2, Math.floor(8 / Math.max(1, (docs ?? []).length)));
-      const blocks: string[] = [];
-      for (const doc of docs ?? []) {
-        const passages = retrievePassages(doc.content ?? "", data.message, perDoc);
-        for (const p of passages) {
-          const index = sources.length + 1;
-          sources.push({
-            index,
-            documentTitle: doc.title,
-            excerpt:
-              p.text.replace(/\s+/g, " ").slice(0, 220).trim() + (p.text.length > 220 ? "…" : ""),
-          });
-          blocks.push(`[${index}] (${doc.title}) ${p.text}`);
-        }
+      const { retrieve, STRICT_GROUNDING_RULES } = await import("@/lib/rag.server");
+      const query = data.message || data.history.filter((m) => m.role === "user").at(-1)?.content || "";
+      const hits = await retrieve(context.supabase, context.userId, data.documentIds, query, 8);
+      sources = hits.map(({ index, documentTitle, excerpt }) => ({ index, documentTitle, excerpt }));
+      if (hits.length === 0) {
+        // Nothing relevant: answer without calling the model so it can't guess.
+        await recordUsage(context.userId, "ai_chat_messages_per_day");
+        return {
+          answer:
+            "That isn't covered in your selected materials. Try rephrasing with terms from your notes, select another document, or upload material on this topic.",
+          sources,
+        };
       }
-      grounding = blocks.length
-        ? `\n\nSTUDY SPACE RULES\nAnswer from the numbered excerpts below, taken from the student's own materials. Cite them inline like [1] or [2]. If the excerpts do not cover the question, say "That isn't covered in your selected materials." and only then add clearly labelled general knowledge. Never invent quotes, numbers or page references.\n\nEXCERPTS\n${blocks.join("\n\n")}`
-        : "\n\nThe student selected materials, but nothing relevant was found in them. Say so plainly before answering from general knowledge.";
+      grounding = `\n\n${STRICT_GROUNDING_RULES}\n\nEXCERPTS\n${hits
+        .map((h) => `[${h.index}] (${h.documentTitle}) ${h.text}`)
+        .join("\n\n")}`;
     }
 
     const { callAI } = await import("@/lib/ai.server");
@@ -84,9 +78,9 @@ export const askTutor = createServerFn({ method: "POST" })
 
     const unsupported: string[] = [];
     for (const file of data.attachments) {
-      if (file.kind === "image" && file.dataUrl) {
+      if (file.kind === "image" && file.dataUrl?.startsWith("data:image/")) {
         parts.push({ type: "image_url", image_url: { url: file.dataUrl } });
-      } else if (file.kind === "document" && file.dataUrl) {
+      } else if (file.kind === "document" && file.dataUrl?.startsWith("data:application/pdf;")) {
         parts.push({ type: "file", file: { filename: file.name, file_data: file.dataUrl } });
       } else {
         unsupported.push(`${file.name} (${file.mime})`);
