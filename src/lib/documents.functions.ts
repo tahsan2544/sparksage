@@ -40,6 +40,13 @@ export const createDocument = createServerFn({ method: "POST" })
       .select("id")
       .single();
     if (error) throw new Error(error.message);
+    // Build the retrieval index now; chat falls back to lazy indexing if this fails.
+    try {
+      const { indexDocument } = await import("@/lib/rag.server");
+      await indexDocument(context.supabase, context.userId, row.id, data.content);
+    } catch (e) {
+      console.error("indexDocument failed", e);
+    }
     return { id: row.id };
   });
 
