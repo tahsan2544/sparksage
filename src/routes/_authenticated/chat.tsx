@@ -274,7 +274,10 @@ function ChatWithAI() {
             mime: f.mime,
             kind: f.kind,
             // Videos are not sent inline; the tutor is told they exist instead.
-            dataUrl: f.kind === "video" ? undefined : f.dataUrl,
+            dataUrl:
+              f.dataUrl && /^data:(image\/(png|jpe?g|webp|gif|heic|heif)|application\/pdf);base64,/.test(f.dataUrl)
+                ? f.dataUrl
+                : undefined,
           })),
         },
       });

@@ -5,11 +5,12 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { imageDataUrl } from "@/lib/data-url";
 
 const schema = z.object({
   fileName: z.string().min(1).max(200),
   /** `data:image/...;base64,...` — capped so payloads stay small. */
-  dataUrl: z.string().max(7_000_000),
+  dataUrl: imageDataUrl(7_000_000),
 });
 
 /** Transcribe an image into plain study text. Counts against the AI quota. */
