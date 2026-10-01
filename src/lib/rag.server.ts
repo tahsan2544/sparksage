@@ -10,7 +10,7 @@ const EMBED_URL = "https://ai.gateway.lovable.dev/v1/embeddings";
 const EMBED_MODEL = "google/gemini-embedding-2";
 const BATCH = 32;
 /** Results scoring below this are treated as "not covered by your materials". */
-const MIN_SCORE = 0.35;
+const MIN_SCORE = 0.55;
 
 export async function embed(texts: string[]): Promise<number[][]> {
   const key = process.env.LOVABLE_API_KEY;
