@@ -288,7 +288,7 @@
 .page-stagger .rounded-3xl.border:hover::after { animation: shine-sweep .9s ease; }
 /* Animated gradient line under the app header. */
 @utility header-glow-line {
-  height: 2px;
+  height: 3px;
   background-image: linear-gradient(90deg, transparent, var(--primary), var(--chart-3), var(--primary-glow), transparent);
   background-size: 200% auto;
   animation: gradient-pan 5s linear infinite;

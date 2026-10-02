@@ -85,7 +85,7 @@ function AuthedLayout() {
             </div>
           )}
 
-          <main className="relative flex-1 mx-auto w-full max-w-6xl px-4 py-8">
+          <main className="relative isolate flex-1 mx-auto w-full max-w-6xl px-4 py-8">
             <div aria-hidden className="blob -z-10 h-72 w-72 bg-primary/30 -top-10 right-0" />
             <div aria-hidden className="blob -z-10 h-64 w-64 bg-chart-3/25 top-1/2 -left-20 [animation-delay:-9s]" />
             <PageTransition />
