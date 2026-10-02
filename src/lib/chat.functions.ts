@@ -112,3 +112,13 @@ export const askTutor = createServerFn({ method: "POST" })
     await recordUsage(context.userId, "ai_chat_messages_per_day");
     return { answer, sources };
   });
+
+/** Turn a tutor answer into natural speech (base64 MP3) for the voice tutor. */
+export const speakAnswer = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ text: z.string().trim().min(1).max(3_000) }).parse(d))
+  .handler(async ({ data }) => {
+    const { synthesizeSpeech } = await import("@/lib/ai.server");
+    const spoken = data.text.replace(/\[\d+\]/g, "").replace(/[*#_`>]/g, "").replace(/\s+/g, " ").trim();
+    return { audio: await synthesizeSpeech(spoken, "nova") };
+  });
