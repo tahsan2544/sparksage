@@ -4,4 +4,4 @@
 
 - [x] Animations & effects polish
 - [x] Standalone voice tutor page: speak questions, grounded answers from materials, read aloud
-- [ ] Second round of effects inside the app (cards, dashboard, backgrounds)
+- [x] Second round of effects inside the app (cards, dashboard, backgrounds)
