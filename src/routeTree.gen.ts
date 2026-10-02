@@ -13,6 +13,7 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedVoiceRouteImport } from './routes/_authenticated/voice'
 import { Route as AuthenticatedSiteSettingsRouteImport } from './routes/_authenticated/site-settings'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedReviewRouteImport } from './routes/_authenticated/review'
@@ -48,6 +49,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedVoiceRoute = AuthenticatedVoiceRouteImport.update({
+  id: '/voice',
+  path: '/voice',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedSiteSettingsRoute =
   AuthenticatedSiteSettingsRouteImport.update({
@@ -150,6 +156,7 @@ export interface FileRoutesByFullPath {
   '/review': typeof AuthenticatedReviewRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/site-settings': typeof AuthenticatedSiteSettingsRoute
+  '/voice': typeof AuthenticatedVoiceRoute
   '/owner/announcements': typeof AuthenticatedOwnerAnnouncementsRoute
   '/owner/feedback': typeof AuthenticatedOwnerFeedbackRoute
   '/documents/': typeof AuthenticatedDocumentsIndexRoute
@@ -170,6 +177,7 @@ export interface FileRoutesByTo {
   '/review': typeof AuthenticatedReviewRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/site-settings': typeof AuthenticatedSiteSettingsRoute
+  '/voice': typeof AuthenticatedVoiceRoute
   '/owner/announcements': typeof AuthenticatedOwnerAnnouncementsRoute
   '/owner/feedback': typeof AuthenticatedOwnerFeedbackRoute
   '/documents': typeof AuthenticatedDocumentsIndexRoute
@@ -193,6 +201,7 @@ export interface FileRoutesById {
   '/_authenticated/review': typeof AuthenticatedReviewRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/site-settings': typeof AuthenticatedSiteSettingsRoute
+  '/_authenticated/voice': typeof AuthenticatedVoiceRoute
   '/_authenticated/owner/announcements': typeof AuthenticatedOwnerAnnouncementsRoute
   '/_authenticated/owner/feedback': typeof AuthenticatedOwnerFeedbackRoute
   '/_authenticated/documents/': typeof AuthenticatedDocumentsIndexRoute
@@ -216,6 +225,7 @@ export interface FileRouteTypes {
     | '/review'
     | '/settings'
     | '/site-settings'
+    | '/voice'
     | '/owner/announcements'
     | '/owner/feedback'
     | '/documents/'
@@ -236,6 +246,7 @@ export interface FileRouteTypes {
     | '/review'
     | '/settings'
     | '/site-settings'
+    | '/voice'
     | '/owner/announcements'
     | '/owner/feedback'
     | '/documents'
@@ -258,6 +269,7 @@ export interface FileRouteTypes {
     | '/_authenticated/review'
     | '/_authenticated/settings'
     | '/_authenticated/site-settings'
+    | '/_authenticated/voice'
     | '/_authenticated/owner/announcements'
     | '/_authenticated/owner/feedback'
     | '/_authenticated/documents/'
@@ -302,6 +314,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/voice': {
+      id: '/_authenticated/voice'
+      path: '/voice'
+      fullPath: '/voice'
+      preLoaderRoute: typeof AuthenticatedVoiceRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/site-settings': {
       id: '/_authenticated/site-settings'
@@ -447,6 +466,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedReviewRoute: typeof AuthenticatedReviewRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedSiteSettingsRoute: typeof AuthenticatedSiteSettingsRoute
+  AuthenticatedVoiceRoute: typeof AuthenticatedVoiceRoute
   AuthenticatedDocumentsIndexRoute: typeof AuthenticatedDocumentsIndexRoute
   AuthenticatedDocumentsDocumentIdIndexRoute: typeof AuthenticatedDocumentsDocumentIdIndexRoute
   AuthenticatedDocumentsDocumentIdChatThreadIdRoute: typeof AuthenticatedDocumentsDocumentIdChatThreadIdRoute
@@ -463,6 +483,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedReviewRoute: AuthenticatedReviewRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedSiteSettingsRoute: AuthenticatedSiteSettingsRoute,
+  AuthenticatedVoiceRoute: AuthenticatedVoiceRoute,
   AuthenticatedDocumentsIndexRoute: AuthenticatedDocumentsIndexRoute,
   AuthenticatedDocumentsDocumentIdIndexRoute:
     AuthenticatedDocumentsDocumentIdIndexRoute,
