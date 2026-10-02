@@ -3,6 +3,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard,
+  Mic,
   FileText,
   MessagesSquare,
   CalendarDays,
@@ -35,6 +36,7 @@ export type NavTarget =
   | "/dashboard"
   | "/documents"
   | "/chat"
+  | "/voice"
   | "/planner"
   | "/progress"
   | "/review"
@@ -50,6 +52,7 @@ const studyItems: { title: string; url: NavTarget; icon: typeof FileText }[] = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Documents", url: "/documents", icon: FileText },
   { title: "Chat with AI", url: "/chat", icon: MessagesSquare },
+  { title: "Voice tutor", url: "/voice", icon: Mic },
   { title: "Study planner", url: "/planner", icon: CalendarDays },
   { title: "Daily review", url: "/review", icon: Brain },
   { title: "Exam prep", url: "/exam", icon: GraduationCap },

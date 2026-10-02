@@ -248,3 +248,52 @@
 @media (prefers-reduced-motion: reduce) {
   .blob, .float-slow, .text-gradient-animated, .animate-marquee, .glow-border::after { animation: none !important; }
 }
+
+/* ---------- In-app effects ---------- */
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(16px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes shine-sweep {
+  from { transform: translateX(-120%) skewX(-20deg); }
+  to { transform: translateX(220%) skewX(-20deg); }
+}
+/* Each block on a page rises in one after another. */
+.page-stagger > * > * { animation: rise-in 0.55s cubic-bezier(.2,.7,.2,1) both; }
+.page-stagger > * > *:nth-child(2) { animation-delay: .07s; }
+.page-stagger > * > *:nth-child(3) { animation-delay: .14s; }
+.page-stagger > * > *:nth-child(4) { animation-delay: .21s; }
+.page-stagger > * > *:nth-child(5) { animation-delay: .28s; }
+.page-stagger > * > *:nth-child(n+6) { animation-delay: .35s; }
+/* Cards lift, glow and catch a sweep of light on hover. */
+.page-stagger .rounded-3xl.border {
+  position: relative;
+  overflow: hidden;
+  transition: transform .3s ease, box-shadow .3s ease, border-color .3s ease;
+}
+.page-stagger .rounded-3xl.border:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-elegant);
+  border-color: color-mix(in oklab, var(--primary) 35%, var(--border));
+}
+.page-stagger .rounded-3xl.border::after {
+  content: "";
+  position: absolute;
+  top: 0; bottom: 0; left: 0;
+  width: 40%;
+  background: linear-gradient(90deg, transparent, color-mix(in oklab, var(--primary-glow) 22%, transparent), transparent);
+  transform: translateX(-120%) skewX(-20deg);
+  pointer-events: none;
+}
+.page-stagger .rounded-3xl.border:hover::after { animation: shine-sweep .9s ease; }
+/* Animated gradient line under the app header. */
+@utility header-glow-line {
+  height: 3px;
+  background-image: linear-gradient(90deg, transparent, var(--primary), var(--chart-3), var(--primary-glow), transparent);
+  background-size: 200% auto;
+  animation: gradient-pan 5s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .page-stagger > * > *, .page-stagger .rounded-3xl.border:hover::after, .header-glow-line { animation: none !important; }
+  .page-stagger .rounded-3xl.border:hover { transform: none; }
+}
