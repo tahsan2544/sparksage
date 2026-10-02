@@ -1,7 +1,8 @@
 // Gate + app shell for every protected route. `ssr: false` because the Supabase
 // session lives in localStorage and cannot be read on the server; without this,
 // a hard refresh on a protected page would loop through /auth.
-import { createFileRoute, Outlet, redirect, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Outlet, redirect, useNavigate, useLocation } from "@tanstack/react-router";
+import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
@@ -83,11 +84,28 @@ function AuthedLayout() {
             </div>
           )}
 
-          <main className="flex-1 mx-auto w-full max-w-6xl px-4 py-8">
-            <Outlet />
+          <main className="relative flex-1 mx-auto w-full max-w-6xl px-4 py-8">
+            <div aria-hidden className="blob -z-10 h-72 w-72 bg-primary/15 -top-10 right-0" />
+            <div aria-hidden className="blob -z-10 h-64 w-64 bg-chart-3/15 top-1/2 -left-20 [animation-delay:-9s]" />
+            <PageTransition />
           </main>
         </div>
       </div>
     </SidebarProvider>
+  );
+}
+
+/** Fade-and-rise each page in when you move around the app. */
+function PageTransition() {
+  const { pathname } = useLocation();
+  return (
+    <motion.div
+      key={pathname}
+      initial={{ opacity: 0, y: 14, filter: "blur(4px)" }}
+      animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+    >
+      <Outlet />
+    </motion.div>
   );
 }
