@@ -17,6 +17,18 @@ import { getPublicSiteData, type SettingsMap } from "@/lib/settings.functions";
 import { savePendingUpload } from "@/lib/pending-upload";
 import { extractText, DOCUMENT_ACCEPT } from "@/lib/extract-text";
 import { ThemeToggle } from "@/components/theme-toggle";
+
+/** Move the card's glow to follow the pointer. */
+function spotlight(e: React.MouseEvent<HTMLElement>) {
+  const r = e.currentTarget.getBoundingClientRect();
+  e.currentTarget.style.setProperty("--mx", `${e.clientX - r.left}px`);
+  e.currentTarget.style.setProperty("--my", `${e.clientY - r.top}px`);
+}
+
+const MARQUEE = [
+  "AI tutor", "Smart summaries", "Instant quizzes", "Flashcards", "Mind maps",
+  "Audio overviews", "Exam prep", "Daily review", "Focus timer", "Progress tracking",
+];
 import {
   ArrowRight,
   BookOpen,
@@ -225,18 +237,30 @@ function Landing() {
         {/* Hero */}
         <section className="relative overflow-hidden">
           <div aria-hidden className="absolute inset-0 -z-10" style={{ backgroundImage: "var(--gradient-hero)" }} />
+          <div aria-hidden className="absolute inset-0 -z-10 bg-grid-fade" />
+          <div aria-hidden className="blob -z-10 h-72 w-72 bg-primary/40 -top-10 -left-10" />
+          <div aria-hidden className="blob -z-10 h-80 w-80 bg-chart-3/40 top-20 right-0 [animation-delay:-6s]" />
+          <div aria-hidden className="blob -z-10 h-64 w-64 bg-primary-glow/40 bottom-0 left-1/3 [animation-delay:-12s]" />
+          <Sparkles aria-hidden className="absolute left-[8%] top-[22%] h-6 w-6 text-primary/60 float-slow hidden md:block" />
+          <Brain aria-hidden className="absolute right-[6%] bottom-[14%] h-7 w-7 text-chart-3/70 float-slow [animation-delay:-2s] hidden md:block" />
+          <Layers aria-hidden className="absolute left-[46%] top-[8%] h-5 w-5 text-primary-glow/70 float-slow [animation-delay:-4s] hidden md:block" />
           <div className="mx-auto max-w-6xl px-4 pt-16 pb-20 grid gap-12 lg:grid-cols-2 items-center">
             <div>
               <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card/70 backdrop-blur px-3 py-1 text-xs text-muted-foreground mb-6">
                 <Sparkles className="h-3 w-3 text-primary" aria-hidden /> Your AI-powered study companion
               </div>
-              <h1 className="text-4xl sm:text-5xl font-bold tracking-tight leading-tight">
+              <motion.h1
+                initial={{ opacity: 0, y: 18 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, ease: "easeOut" }}
+                className="text-4xl sm:text-5xl font-bold tracking-tight leading-tight text-gradient-animated"
+              >
                 {settings.app_tagline || "Study Smarter, Not Harder."}
-              </h1>
+              </motion.h1>
               <p className="mt-5 text-lg text-muted-foreground max-w-xl">{settings.app_subheading}</p>
               <div className="mt-8 flex flex-wrap gap-3">
                 <Link to="/auth">
-                  <Button size="lg" className="shadow-[var(--shadow-elegant)]">
+                  <Button size="lg" className="shadow-[var(--shadow-elegant)] glow-border rounded-[18px] hover-scale">
                     Get started <ArrowRight className="h-4 w-4 ml-1" />
                   </Button>
                 </Link>
@@ -257,6 +281,17 @@ function Landing() {
           </div>
         </section>
 
+        {/* Scrolling topic banner */}
+        <div aria-hidden className="overflow-hidden border-y border-border bg-card/60 py-4">
+          <div className="flex w-max animate-marquee gap-10 text-sm font-medium text-muted-foreground">
+            {[...MARQUEE, ...MARQUEE].map((t, i) => (
+              <span key={i} className="inline-flex items-center gap-2">
+                <Sparkles className="h-3.5 w-3.5 text-primary" /> {t}
+              </span>
+            ))}
+          </div>
+        </div>
+
         {/* Features */}
         <section id="features" className="mx-auto max-w-6xl px-4 py-20">
           <SectionHeading
@@ -265,16 +300,17 @@ function Landing() {
             body="A connected, cloud-based toolkit that turns passive reading into active learning."
           />
           <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {FEATURES.map(({ icon: Icon, title, body }) => (
+            {FEATURES.map(({ icon: Icon, title, body }, i) => (
               <motion.div
                 key={title}
-                initial={{ opacity: 0, y: 12 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0, y: 24, scale: 0.97 }}
+                whileInView={{ opacity: 1, y: 0, scale: 1 }}
                 viewport={{ once: true, margin: "-60px" }}
-                transition={{ duration: 0.35 }}
-                className="rounded-3xl border border-border bg-card p-6 transition-all hover:shadow-[var(--shadow-elegant)] hover:-translate-y-0.5"
+                transition={{ duration: 0.45, delay: (i % 3) * 0.08 }}
+                onMouseMove={spotlight}
+                className="spotlight-card group rounded-3xl border border-border bg-card p-6 transition-all hover:shadow-[var(--shadow-elegant)] hover:-translate-y-1"
               >
-                <div className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-accent text-accent-foreground mb-4">
+                <div className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-[image:var(--gradient-primary)] text-primary-foreground mb-4 transition-transform duration-300 group-hover:rotate-6 group-hover:scale-110">
                   <Icon className="h-5 w-5" aria-hidden />
                 </div>
                 <h3 className="font-semibold">{title}</h3>
@@ -294,7 +330,15 @@ function Landing() {
             />
             <ol className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {STEPS.map(({ icon: Icon, title, body }, i) => (
-                <li key={title} className="rounded-3xl border border-border bg-card p-6">
+                <motion.li
+                  key={title}
+                  initial={{ opacity: 0, x: -16 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true, margin: "-60px" }}
+                  transition={{ duration: 0.45, delay: i * 0.12 }}
+                  onMouseMove={spotlight}
+                  className="spotlight-card rounded-3xl border border-border bg-card p-6 transition-all hover:-translate-y-1 hover:shadow-[var(--shadow-elegant)]"
+                >
                   <div className="flex items-center gap-2 text-xs font-medium text-primary mb-3">
                     <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-primary/10">
                       {i + 1}
@@ -304,7 +348,7 @@ function Landing() {
                   <Icon className="h-5 w-5 text-primary mb-3" aria-hidden />
                   <h3 className="font-semibold">{title}</h3>
                   <p className="text-sm text-muted-foreground mt-1">{body}</p>
-                </li>
+                </motion.li>
               ))}
             </ol>
           </div>
@@ -341,15 +385,23 @@ function Landing() {
           <div className="mx-auto max-w-6xl px-4 py-20">
             <SectionHeading eyebrow="Loved by students" title="Real study, real results" />
             <div className="mt-10 grid gap-4 md:grid-cols-3">
-              {TESTIMONIALS.map((t) => (
-                <figure key={t.name} className="rounded-3xl border border-border bg-card p-6">
+              {TESTIMONIALS.map((t, i) => (
+                <motion.figure
+                  key={t.name}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-60px" }}
+                  transition={{ duration: 0.45, delay: i * 0.1 }}
+                  onMouseMove={spotlight}
+                  className="spotlight-card rounded-3xl border border-border bg-card p-6 transition-all hover:-translate-y-1 hover:shadow-[var(--shadow-elegant)]"
+                >
                   <Quote className="h-5 w-5 text-primary mb-3" aria-hidden />
                   <blockquote className="text-sm leading-relaxed">{t.quote}</blockquote>
                   <figcaption className="mt-4 text-sm">
                     <span className="font-medium">{t.name}</span>
                     <span className="text-muted-foreground"> · {t.role}</span>
                   </figcaption>
-                </figure>
+                </motion.figure>
               ))}
             </div>
           </div>
@@ -374,8 +426,9 @@ function Landing() {
         </section>
 
         {/* CTA */}
-        <section className="mx-auto max-w-4xl px-4 py-20 text-center">
-          <h2 className="text-3xl font-bold tracking-tight">Your next study session starts here</h2>
+        <section className="relative mx-auto max-w-4xl px-4 py-20 text-center overflow-hidden">
+          <div aria-hidden className="blob -z-10 h-64 w-64 bg-primary/30 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" />
+          <h2 className="text-3xl font-bold tracking-tight text-gradient-animated">Your next study session starts here</h2>
           <p className="mt-3 text-muted-foreground">
             Upload one document, image or video and see what {appName} can do in under a minute.
           </p>
