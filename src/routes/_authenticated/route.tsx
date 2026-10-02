@@ -59,7 +59,8 @@ function AuthedLayout() {
         <AppSidebar isOwner={Boolean(isOwner)} appName={appName} />
 
         <div className="flex-1 flex flex-col min-w-0">
-          <header className="h-16 border-b border-border sticky top-0 z-40 bg-background/80 backdrop-blur">
+          <header className="relative h-16 border-b border-border sticky top-0 z-40 bg-background/80 backdrop-blur">
+            <div aria-hidden className="header-glow-line absolute inset-x-0 bottom-0" />
             <div className="h-full px-4 flex items-center justify-between gap-3">
               <div className="flex items-center gap-2 min-w-0">
                 <SidebarTrigger aria-label="Toggle sidebar" />
@@ -85,8 +86,8 @@ function AuthedLayout() {
           )}
 
           <main className="relative flex-1 mx-auto w-full max-w-6xl px-4 py-8">
-            <div aria-hidden className="blob -z-10 h-72 w-72 bg-primary/15 -top-10 right-0" />
-            <div aria-hidden className="blob -z-10 h-64 w-64 bg-chart-3/15 top-1/2 -left-20 [animation-delay:-9s]" />
+            <div aria-hidden className="blob -z-10 h-72 w-72 bg-primary/30 -top-10 right-0" />
+            <div aria-hidden className="blob -z-10 h-64 w-64 bg-chart-3/25 top-1/2 -left-20 [animation-delay:-9s]" />
             <PageTransition />
           </main>
         </div>
@@ -104,6 +105,7 @@ function PageTransition() {
       initial={{ opacity: 0, y: 14, filter: "blur(4px)" }}
       animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
       transition={{ duration: 0.4, ease: "easeOut" }}
+      className="page-stagger"
     >
       <Outlet />
     </motion.div>
