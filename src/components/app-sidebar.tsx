@@ -1,6 +1,6 @@
 // Collapsible app sidebar. Collapse state is persisted by the shadcn
 // SidebarProvider cookie, so it is remembered between visits.
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Library, BookMarked, Link, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard,
   Mic,
@@ -51,6 +51,8 @@ export type NavTarget =
 const studyItems: { title: string; url: NavTarget; icon: typeof FileText }[] = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Documents", url: "/documents", icon: FileText },
+  { title: "Materials library", url: "/library", icon: Library },
+  { title: "Study sources", url: "/sources", icon: BookMarked },
   { title: "Chat with AI", url: "/chat", icon: MessagesSquare },
   { title: "Voice tutor", url: "/voice", icon: Mic },
   { title: "Study planner", url: "/planner", icon: CalendarDays },
