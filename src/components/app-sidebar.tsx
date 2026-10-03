@@ -1,6 +1,6 @@
 // Collapsible app sidebar. Collapse state is persisted by the shadcn
 // SidebarProvider cookie, so it is remembered between visits.
-import { Library, BookMarked, Link, useRouterState } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard,
   Mic,
@@ -17,6 +17,8 @@ import {
   GraduationCap,
   Megaphone,
   Inbox,
+  Library,
+  BookMarked,
 } from "lucide-react";
 
 import {
