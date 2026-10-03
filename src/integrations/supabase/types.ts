@@ -343,26 +343,41 @@ export type Database = {
       }
       documents: {
         Row: {
+          author: string | null
           content: string
           created_at: string
+          details: string | null
           id: string
+          kind: string
+          subject: string | null
           title: string
+          topic: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          author?: string | null
           content: string
           created_at?: string
+          details?: string | null
           id?: string
+          kind?: string
+          subject?: string | null
           title: string
+          topic?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          author?: string | null
           content?: string
           created_at?: string
+          details?: string | null
           id?: string
+          kind?: string
+          subject?: string | null
           title?: string
+          topic?: string | null
           updated_at?: string
           user_id?: string
         }
