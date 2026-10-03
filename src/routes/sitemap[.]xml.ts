@@ -12,6 +12,7 @@ interface SitemapEntry {
 // Only public, indexable routes. /auth and authenticated app routes are excluded.
 const entries: SitemapEntry[] = [
   { path: "/", changefreq: "weekly", priority: "1.0" },
+  { path: "/study-schedule-generator", changefreq: "monthly", priority: "0.8" },
 ];
 
 export const Route = createFileRoute("/sitemap.xml")({

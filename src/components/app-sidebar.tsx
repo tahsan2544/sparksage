@@ -17,6 +17,8 @@ import {
   GraduationCap,
   Megaphone,
   Inbox,
+  Library,
+  BookMarked,
 } from "lucide-react";
 
 import {
@@ -51,6 +53,8 @@ export type NavTarget =
 const studyItems: { title: string; url: NavTarget; icon: typeof FileText }[] = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Documents", url: "/documents", icon: FileText },
+  { title: "Materials library", url: "/library", icon: Library },
+  { title: "Study sources", url: "/sources", icon: BookMarked },
   { title: "Chat with AI", url: "/chat", icon: MessagesSquare },
   { title: "Voice tutor", url: "/voice", icon: Mic },
   { title: "Study planner", url: "/planner", icon: CalendarDays },

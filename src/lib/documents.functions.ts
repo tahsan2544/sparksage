@@ -9,12 +9,35 @@ const uuid = z.string().uuid();
 
 // ---------- Documents ----------
 
+export const DOCUMENT_KINDS = ["textbook", "lecture_notes", "slides", "notes", "other"] as const;
+const opt = (max: number) => z.string().trim().max(max).optional().nullable();
+const categoryShape = {
+  kind: z.enum(DOCUMENT_KINDS).optional(),
+  subject: opt(120),
+  topic: opt(160),
+  author: opt(200),
+  details: opt(2000),
+};
+
+/** Update a material's library category (type, subject, topic, author, details). */
+export const updateDocumentCategory = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: uuid, title: z.string().trim().min(1).max(200).optional(), ...categoryShape }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { id, ...rest } = data;
+    const patch: Record<string, string | null> = {};
+    for (const [k, v] of Object.entries(rest)) if (v !== undefined) patch[k] = v === "" ? null : v;
+    const { error } = await context.supabase.from("documents").update(patch).eq("id", id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
 export const listDocuments = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("documents")
-      .select("id, title, created_at, updated_at")
+      .select("id, title, kind, subject, topic, author, details, created_at, updated_at")
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
     return data ?? [];
@@ -27,6 +50,7 @@ export const createDocument = createServerFn({ method: "POST" })
       .object({
         title: z.string().trim().min(1).max(200),
         content: z.string().trim().min(1).max(200_000),
+        ...categoryShape,
       })
       .parse(d),
   )
@@ -36,7 +60,16 @@ export const createDocument = createServerFn({ method: "POST" })
 
     const { data: row, error } = await context.supabase
       .from("documents")
-      .insert({ title: data.title, content: data.content, user_id: context.userId })
+      .insert({
+        title: data.title,
+        content: data.content,
+        user_id: context.userId,
+        kind: data.kind ?? "notes",
+        subject: data.subject || null,
+        topic: data.topic || null,
+        author: data.author || null,
+        details: data.details || null,
+      })
       .select("id")
       .single();
     if (error) throw new Error(error.message);

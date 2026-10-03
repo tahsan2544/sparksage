@@ -5,3 +5,7 @@
 - [x] Animations & effects polish
 - [x] Standalone voice tutor page: speak questions, grounded answers from materials, read aloud
 - [x] Second round of effects inside the app (cards, dashboard, backgrounds)
+
+- [x] Public study schedule generator
+- [x] Study sources page
+- [x] Materials library by subject/topic

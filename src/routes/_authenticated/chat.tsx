@@ -31,6 +31,7 @@ export const Route = createFileRoute("/_authenticated/chat")({
       },
     ],
   }),
+  validateSearch: (s: Record<string, unknown>) => ({ docs: typeof s.docs === "string" ? s.docs : undefined }),
   component: ChatWithAI,
 });
 
@@ -102,8 +103,11 @@ function ChatWithAI() {
   const [files, setFiles] = useState<Attachment[]>([]);
   const [busy, setBusy] = useState(false);
   const [dragging, setDragging] = useState(false);
-  const [selectedDocs, setSelectedDocs] = useState<string[]>([]);
-  const [showSources, setShowSources] = useState(false);
+  const { docs: docsParam } = Route.useSearch();
+  const [selectedDocs, setSelectedDocs] = useState<string[]>(() =>
+    (docsParam ?? "").split(",").filter((id) => /^[0-9a-f-]{36}$/i.test(id)).slice(0, 10),
+  );
+  const [showSources, setShowSources] = useState(Boolean(docsParam));
   const [listening, setListening] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(false);
   const recognitionRef = useRef<any>(null);
@@ -336,6 +340,20 @@ function ChatWithAI() {
             {documents.data?.length === 0 && (
               <p className="text-sm text-muted-foreground">You haven't uploaded any documents yet.</p>
             )}
+            {(() => {
+              const subjects = [...new Set((documents.data ?? []).map((d) => d.subject).filter(Boolean))] as string[];
+              if (!subjects.length) return null;
+              return (
+                <div className="flex flex-wrap items-center gap-2 mb-2">
+                  <span className="text-xs text-muted-foreground">By subject:</span>
+                  {subjects.map((sub) => (
+                    <Button key={sub} type="button" size="sm" variant="secondary" onClick={() =>
+                      setSelectedDocs((documents.data ?? []).filter((d) => d.subject === sub).map((d) => d.id).slice(0, 10))
+                    }>{sub}</Button>
+                  ))}
+                </div>
+              );
+            })()}
             <div className="flex flex-wrap gap-2">
               {documents.data?.map((doc) => {
                 const active = selectedDocs.includes(doc.id);
@@ -353,6 +371,7 @@ function ChatWithAI() {
                     }
                   >
                     {doc.title}
+                    {doc.topic && <span className="opacity-70"> · {doc.topic}</span>}
                   </Button>
                 );
               })}
