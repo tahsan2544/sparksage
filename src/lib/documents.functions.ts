@@ -25,9 +25,9 @@ export const updateDocumentCategory = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ id: uuid, title: z.string().trim().min(1).max(200).optional(), ...categoryShape }).parse(d))
   .handler(async ({ data, context }) => {
     const { id, ...rest } = data;
-    const patch: Record<string, string | null> = {};
+    const patch: Record<string, any> = {};
     for (const [k, v] of Object.entries(rest)) if (v !== undefined) patch[k] = v === "" ? null : v;
-    const { error } = await context.supabase.from("documents").update(patch).eq("id", id);
+    const { error } = await context.supabase.from("documents").update(patch as never).eq("id", id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });

@@ -37,6 +37,8 @@ import {
 export type NavTarget =
   | "/dashboard"
   | "/documents"
+  | "/library"
+  | "/sources"
   | "/chat"
   | "/voice"
   | "/planner"
