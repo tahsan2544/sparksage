@@ -31,7 +31,7 @@ export const Route = createFileRoute("/_authenticated/chat")({
       },
     ],
   }),
-  validateSearch: (s: Record<string, unknown>) => ({ docs: typeof s.docs === "string" ? s.docs : undefined }),
+  validateSearch: (s: Record<string, unknown>) => ({ docs: typeof s.docs === "string" ? s.docs : undefined }) as { docs?: string },
   component: ChatWithAI,
 });
 
