@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { toast } from "sonner";
 import { Sparkles } from "lucide-react";
 import { lovable } from "@/integrations/lovable/index";
+import { hasPendingUpload } from "@/lib/pending-upload";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -44,7 +45,7 @@ function AuthPage() {
   // If already signed in, skip the page.
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
-      if (data.user) navigate({ to: "/dashboard", replace: true });
+      if (data.user) navigate({ to: hasPendingUpload() ? "/documents" : "/dashboard", replace: true });
     });
   }, [navigate]);
 
@@ -60,7 +61,7 @@ function AuthPage() {
         return;
       }
       if (result.redirected) return;
-      navigate({ to: "/dashboard", replace: true });
+      navigate({ to: hasPendingUpload() ? "/documents" : "/dashboard", replace: true });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Google sign-in failed");
     } finally {
@@ -87,7 +88,7 @@ function AuthPage() {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
       }
-      navigate({ to: "/dashboard", replace: true });
+      navigate({ to: hasPendingUpload() ? "/documents" : "/dashboard", replace: true });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Something went wrong");
     } finally {

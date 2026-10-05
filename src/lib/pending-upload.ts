@@ -39,3 +39,12 @@ export function consumePendingUpload(): PendingUpload | null {
     return null;
   }
 }
+
+/** True when a landing-page file is waiting to be processed (does not clear it). */
+export function hasPendingUpload(): boolean {
+  try {
+    return !!sessionStorage.getItem(KEY);
+  } catch {
+    return false;
+  }
+}
