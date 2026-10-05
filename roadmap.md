@@ -9,3 +9,4 @@
 - [x] Public study schedule generator
 - [x] Study sources page
 - [x] Materials library by subject/topic
+- [x] Smooth word-by-word animation for every new AI reply

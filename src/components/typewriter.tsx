@@ -1,13 +1,12 @@
-// Reveals AI answers one letter at a time so a reply feels like it is being
-// typed. Purely presentational: the full text is already in memory, we just
-// unveil it smoothly (and skip the animation for older messages).
+// Reveals new AI answers one word at a time, matching the cadence of a
+// streaming LLM. The full text is already in memory; older replies skip it.
 import { useEffect, useRef, useState } from "react";
 
 interface TypewriterProps {
   text: string;
   /** Set false for messages that were already on screen (history). */
   animate?: boolean;
-  /** Characters revealed per second. */
+  /** Words revealed per second. */
   speed?: number;
   /** Called on every reveal tick, e.g. to keep the transcript scrolled down. */
   onTick?: () => void;
@@ -24,7 +23,7 @@ function tidy(raw: string) {
     .replace(/^\s*[-*]\s+/gm, "• ");
 }
 
-export function Typewriter({ text: raw, animate = true, speed = 110, onTick, className }: TypewriterProps) {
+export function Typewriter({ text: raw, animate = true, speed = 18, onTick, className }: TypewriterProps) {
   const text = tidy(raw);
   const [shown, setShown] = useState(() => (animate ? "" : text));
   const tickRef = useRef(onTick);
@@ -43,25 +42,39 @@ export function Typewriter({ text: raw, animate = true, speed = 110, onTick, cla
       return;
     }
 
-    let frame = 0;
-    let start: number | null = null;
-    const step = (now: number) => {
-      if (start === null) start = now;
-      const chars = Math.min(text.length, Math.floor(((now - start) / 1000) * speed));
-      setShown(text.slice(0, chars));
+    const words = text.match(/\S+\s*/g) ?? [];
+    if (words.length === 0) {
+      setShown(text);
+      return;
+    }
+
+    let index = 0;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const revealNextWord = () => {
+      index += 1;
+      setShown(words.slice(0, index).join(""));
       tickRef.current?.();
-      if (chars < text.length) frame = requestAnimationFrame(step);
+      if (index >= words.length) return;
+
+      const word = words[index - 1]?.trim() ?? "";
+      const baseDelay = 1000 / Math.max(speed, 1);
+      const punctuationPause = /[.!?]$/.test(word) ? 110 : /[,;:]$/.test(word) ? 45 : 0;
+      timer = setTimeout(revealNextWord, baseDelay + punctuationPause);
     };
-    frame = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(frame);
+
+    setShown("");
+    timer = setTimeout(revealNextWord, 80);
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
   }, [text, animate, speed]);
 
   const done = shown.length >= text.length;
   return (
-    <span className={className}>
-      {shown}
+    <span className={className} aria-live="polite">
+      <span aria-hidden={!done}>{shown}</span>
       {!done && <span className="ml-0.5 inline-block h-4 w-[2px] translate-y-0.5 animate-pulse bg-current" aria-hidden />}
-      {/* Screen readers get the finished answer, not each keystroke. */}
+      {/* Screen readers get the finished answer once, not every animation tick. */}
       {!done && <span className="sr-only">{text}</span>}
     </span>
   );
