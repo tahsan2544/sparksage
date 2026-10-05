@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { toast } from "sonner";
 import { Sparkles } from "lucide-react";
 import { lovable } from "@/integrations/lovable/index";
+import { hasPendingUpload } from "@/lib/pending-upload";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
