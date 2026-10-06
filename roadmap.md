@@ -10,3 +10,6 @@
 - [x] Study sources page
 - [x] Materials library by subject/topic
 - [x] Smooth word-by-word animation for every new AI reply
+- [ ] Add themed AI image generator with prompt controls and download
+- [ ] Add server-side unsafe-content filtering and authenticated image requests
+- [ ] Test successful generation, blocked prompts, errors, and responsive UI
