@@ -25,3 +25,23 @@ const BLOCKED_RULES: Array<{ label: string; pattern: RegExp }> = [
   { label: "extremist propaganda", pattern: /terrorist propaganda|extremist recruitment|nazi propaganda|isis propaganda/i },
   { label: "instructions for serious wrongdoing", pattern: /make a bomb|build a bomb|meth lab|manufacture meth|counterfeit money|fake government id/i },
 ];
+
+export function checkImagePrompt(prompt: string): { safe: true } | { safe: false; message: string } {
+  const normalized = prompt.normalize("NFKC").replace(/\s+/g, " ").trim();
+  const blocked = BLOCKED_RULES.find((rule) => rule.pattern.test(normalized));
+  if (!blocked) return { safe: true };
+  return {
+    safe: false,
+    message: `This request was blocked because it appears to include ${blocked.label}. Try a safe, non-graphic study or creative prompt.`,
+  };
+}
+
+export function buildImagePrompt(input: ImageRequest): string {
+  return `${STYLE_PROMPTS[input.style]}. Create this image: ${input.prompt}. Keep the result clear, polished, inclusive, age-appropriate, and free of graphic or sexual content. Do not imitate living artists. Avoid logos, watermarks, or extra text unless requested.`;
+}
+
+export const IMAGE_SIZES: Record<ImageRequest["aspectRatio"], string> = {
+  square: "1024x1024",
+  landscape: "1536x1024",
+  portrait: "1024x1536",
+};
