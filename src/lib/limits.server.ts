@@ -15,6 +15,7 @@ export type MeteredFeature =
   | "flashcard_generations_per_day"
   | "summaries_per_day"
   | "document_studio_generations_per_day";
+  
 
 const DAILY: MeteredFeature[] = [
   "ai_chat_messages_per_day",
