@@ -8,3 +8,6 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- Runtime image generation uses an authenticated TanStack server route that streams directly from Lovable AI Gateway; this keeps credentials private and supports progressive previews.
+- Image prompts pass deterministic server-side safety checks before provider moderation; this blocks clearly unsafe requests early without weakening the upstream filter.
