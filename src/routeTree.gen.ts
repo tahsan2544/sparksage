@@ -27,6 +27,7 @@ import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedSiteSettingsRouteImport } from './routes/_authenticated/site-settings'
 import { Route as AuthenticatedSourcesRouteImport } from './routes/_authenticated/sources'
 import { Route as AuthenticatedVoiceRouteImport } from './routes/_authenticated/voice'
+import { Route as ApiGenerateImageRouteImport } from './routes/api/generate-image'
 import { Route as AuthenticatedDocumentsIndexRouteImport } from './routes/_authenticated/documents/index'
 import { Route as AuthenticatedOwnerIndexRouteImport } from './routes/_authenticated/owner/index'
 import { Route as AuthenticatedOwnerAnnouncementsRouteImport } from './routes/_authenticated/owner/announcements'
@@ -124,6 +125,11 @@ const AuthenticatedVoiceRoute = AuthenticatedVoiceRouteImport.update({
   path: '/voice',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiGenerateImageRoute = ApiGenerateImageRouteImport.update({
+  id: '/api/generate-image',
+  path: '/api/generate-image',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedDocumentsIndexRoute =
   AuthenticatedDocumentsIndexRouteImport.update({
     id: '/documents/',
@@ -178,6 +184,7 @@ export interface FileRoutesByFullPath {
   '/site-settings': typeof AuthenticatedSiteSettingsRoute
   '/sources': typeof AuthenticatedSourcesRoute
   '/voice': typeof AuthenticatedVoiceRoute
+  '/api/generate-image': typeof ApiGenerateImageRoute
   '/owner/announcements': typeof AuthenticatedOwnerAnnouncementsRoute
   '/owner/feedback': typeof AuthenticatedOwnerFeedbackRoute
   '/documents/': typeof AuthenticatedDocumentsIndexRoute
@@ -202,6 +209,7 @@ export interface FileRoutesByTo {
   '/site-settings': typeof AuthenticatedSiteSettingsRoute
   '/sources': typeof AuthenticatedSourcesRoute
   '/voice': typeof AuthenticatedVoiceRoute
+  '/api/generate-image': typeof ApiGenerateImageRoute
   '/owner/announcements': typeof AuthenticatedOwnerAnnouncementsRoute
   '/owner/feedback': typeof AuthenticatedOwnerFeedbackRoute
   '/documents': typeof AuthenticatedDocumentsIndexRoute
@@ -229,6 +237,7 @@ export interface FileRoutesById {
   '/_authenticated/site-settings': typeof AuthenticatedSiteSettingsRoute
   '/_authenticated/sources': typeof AuthenticatedSourcesRoute
   '/_authenticated/voice': typeof AuthenticatedVoiceRoute
+  '/api/generate-image': typeof ApiGenerateImageRoute
   '/_authenticated/owner/announcements': typeof AuthenticatedOwnerAnnouncementsRoute
   '/_authenticated/owner/feedback': typeof AuthenticatedOwnerFeedbackRoute
   '/_authenticated/documents/': typeof AuthenticatedDocumentsIndexRoute
@@ -256,6 +265,7 @@ export interface FileRouteTypes {
     | '/site-settings'
     | '/sources'
     | '/voice'
+    | '/api/generate-image'
     | '/owner/announcements'
     | '/owner/feedback'
     | '/documents/'
@@ -280,6 +290,7 @@ export interface FileRouteTypes {
     | '/site-settings'
     | '/sources'
     | '/voice'
+    | '/api/generate-image'
     | '/owner/announcements'
     | '/owner/feedback'
     | '/documents'
@@ -306,6 +317,7 @@ export interface FileRouteTypes {
     | '/_authenticated/site-settings'
     | '/_authenticated/sources'
     | '/_authenticated/voice'
+    | '/api/generate-image'
     | '/_authenticated/owner/announcements'
     | '/_authenticated/owner/feedback'
     | '/_authenticated/documents/'
@@ -320,6 +332,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   StudyScheduleGeneratorRoute: typeof StudyScheduleGeneratorRoute
+  ApiGenerateImageRoute: typeof ApiGenerateImageRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -450,6 +463,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedVoiceRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/generate-image': {
+      id: '/api/generate-image'
+      path: '/api/generate-image'
+      fullPath: '/api/generate-image'
+      preLoaderRoute: typeof ApiGenerateImageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/documents/': {
       id: '/_authenticated/documents/'
       path: '/documents'
@@ -562,6 +582,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   StudyScheduleGeneratorRoute: StudyScheduleGeneratorRoute,
+  ApiGenerateImageRoute: ApiGenerateImageRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
