@@ -32,7 +32,7 @@ export const Route = createFileRoute("/api/generate-image")({
           auth: { persistSession: false, autoRefreshToken: false },
         });
         const { data: claims, error: authError } = await authClient.auth.getClaims(token);
-        if (authError || !claims.claims?.sub) return new Response("Your session expired. Please sign in again.", { status: 401 });
+        if (authError || !claims?.claims?.sub) return new Response("Your session expired. Please sign in again.", { status: 401 });
 
         let raw: unknown;
         try {
