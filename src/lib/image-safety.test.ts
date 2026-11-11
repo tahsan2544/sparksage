@@ -1,3 +1,4 @@
+/// <reference types="bun" />
 import { describe, expect, test } from "bun:test";
 import { buildImagePrompt, checkImagePrompt, imageRequestSchema, IMAGE_STYLES } from "./image-safety";
 
