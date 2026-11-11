@@ -13,3 +13,5 @@
 - [x] Add themed AI image generator with prompt controls and download
 - [x] Add server-side unsafe-content filtering and authenticated image requests
 - [x] Test successful generation, blocked prompts, errors, and responsive UI
+- [ ] Expand Image Studio styles, palettes, lighting, and composition; verify generation
+- [ ] Add real textbooks/lecture notes and verify Ask about subject — waiting for the user's source files (available uploads are screenshots)
