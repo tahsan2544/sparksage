@@ -1,13 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { Download, ImageIcon, Loader2, Palette, ShieldCheck, WandSparkles } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { checkImagePrompt } from "@/lib/image-safety";
+import { checkImagePrompt, IMAGE_STYLES, IMAGE_PALETTES, IMAGE_LIGHTING, IMAGE_COMPOSITIONS, type ImageRequest } from "@/lib/image-safety";
 import { streamImage } from "@/lib/stream-image";
 import { cn } from "@/lib/utils";
 
@@ -26,15 +27,8 @@ export const Route = createFileRoute("/_authenticated/image-studio")({
   component: ImageStudio,
 });
 
-type Style = "sparksage" | "diagram" | "storybook" | "photoreal";
+type Style = ImageRequest["style"];
 type AspectRatio = "square" | "landscape" | "portrait";
-
-const STYLES: Array<{ value: Style; label: string; description: string }> = [
-  { value: "sparksage", label: "SparkSage", description: "Soft, warm and polished" },
-  { value: "diagram", label: "Study diagram", description: "Clear visual explanation" },
-  { value: "storybook", label: "Storybook", description: "Friendly illustrated scene" },
-  { value: "photoreal", label: "Photoreal", description: "Natural editorial photo" },
-];
 
 const RATIOS: Array<{ value: AspectRatio; label: string; className: string }> = [
   { value: "square", label: "Square", className: "aspect-square w-4" },
@@ -46,20 +40,28 @@ const IDEAS = [
   "A friendly visual of a plant cell as a tiny organized city",
   "A calm study desk with biology notes, morning light, and a cup of tea",
   "An educational diagram showing the water cycle without text labels",
+  "A watercolor solar system with carefully arranged planets and stars",
+  "A tiny clay library with a cheerful owl reading a book",
+  "A pencil sketch of a leaf showing veins and detailed texture",
 ];
 
 function ImageStudio() {
   const [prompt, setPrompt] = useState(IDEAS[0]);
   const [style, setStyle] = useState<Style>("sparksage");
   const [aspectRatio, setAspectRatio] = useState<AspectRatio>("square");
+  const [palette, setPalette] = useState<ImageRequest["palette"]>("signature");
+  const [lighting, setLighting] = useState<ImageRequest["lighting"]>("auto");
+  const [composition, setComposition] = useState<ImageRequest["composition"]>("auto");
+  const [outputSettings, setOutputSettings] = useState({ aspectRatio: "square" as AspectRatio, prompt: "" });
+  const reducedMotion = useReducedMotion();
   const [image, setImage] = useState<string>();
   const [isFinal, setIsFinal] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
   const outputRatio = useMemo(
-    () => aspectRatio === "landscape" ? "aspect-[3/2]" : aspectRatio === "portrait" ? "aspect-[2/3] max-h-[680px]" : "aspect-square",
-    [aspectRatio],
+    () => outputSettings.aspectRatio === "landscape" ? "aspect-[3/2]" : outputSettings.aspectRatio === "portrait" ? "aspect-[2/3] max-h-[680px]" : "aspect-square",
+    [outputSettings.aspectRatio],
   );
 
   async function generate() {
@@ -71,6 +73,7 @@ function ImageStudio() {
       return;
     }
     setBusy(true);
+    setOutputSettings({ aspectRatio, prompt: cleanPrompt });
     setError("");
     setImage(undefined);
     setIsFinal(false);
@@ -80,7 +83,7 @@ function ImageStudio() {
       if (!token) throw new Error("Your session expired. Please sign in again.");
       await streamImage(
         "/api/generate-image",
-        { prompt: cleanPrompt, style, aspectRatio },
+        { prompt: cleanPrompt, style, aspectRatio, palette, lighting, composition },
         (nextImage, final) => {
           setImage(nextImage);
           setIsFinal(final);
@@ -142,7 +145,7 @@ function ImageStudio() {
           <fieldset className="space-y-3">
             <legend className="text-sm font-medium">Visual style</legend>
             <div className="grid grid-cols-2 gap-2">
-              {STYLES.map((option) => (
+              {IMAGE_STYLES.map((option) => (
                 <Button
                   key={option.value}
                   type="button"
@@ -178,6 +181,39 @@ function ImageStudio() {
             </div>
           </fieldset>
 
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2 sm:col-span-2">
+              <Label htmlFor="image-palette">Color palette</Label>
+              <Select value={palette} onValueChange={(value) => {
+                const option = IMAGE_PALETTES.find((item) => item.value === value);
+                if (option) setPalette(option.value);
+              }}>
+                <SelectTrigger id="image-palette"><SelectValue /></SelectTrigger>
+                <SelectContent>{IMAGE_PALETTES.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="image-lighting">Lighting</Label>
+              <Select value={lighting} onValueChange={(value) => {
+                const option = IMAGE_LIGHTING.find((item) => item.value === value);
+                if (option) setLighting(option.value);
+              }}>
+                <SelectTrigger id="image-lighting"><SelectValue /></SelectTrigger>
+                <SelectContent>{IMAGE_LIGHTING.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="image-composition">Composition</Label>
+              <Select value={composition} onValueChange={(value) => {
+                const option = IMAGE_COMPOSITIONS.find((item) => item.value === value);
+                if (option) setComposition(option.value);
+              }}>
+                <SelectTrigger id="image-composition"><SelectValue /></SelectTrigger>
+                <SelectContent>{IMAGE_COMPOSITIONS.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+          </div>
+
           {error && <p role="alert" className="rounded-2xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">{error}</p>}
 
           <Button className="h-11 w-full" onClick={generate} disabled={busy || prompt.trim().length < 3}>
@@ -195,10 +231,10 @@ function ImageStudio() {
           <div className={cn("relative mx-auto w-full overflow-hidden rounded-3xl border border-border bg-muted/50 shadow-[var(--shadow-elegant)]", outputRatio)}>
             {image ? (
               <motion.img
-                initial={{ opacity: 0.6, scale: 1.02 }}
+                initial={reducedMotion ? false : { opacity: 0.6, scale: 1.02 }}
                 animate={{ opacity: 1, scale: 1 }}
                 src={image}
-                alt={prompt.trim() || "AI-generated study visual"}
+                alt={outputSettings.prompt || "AI-generated study visual"}
                 className={cn("h-full w-full object-cover transition-[filter] duration-700", isFinal ? "blur-0" : "blur-xl")}
               />
             ) : (
