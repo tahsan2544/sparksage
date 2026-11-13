@@ -12,3 +12,4 @@
 - Runtime image generation uses an authenticated TanStack server route that streams directly from Lovable AI Gateway; this keeps credentials private and supports progressive previews.
 - Image prompts pass deterministic server-side safety checks before provider moderation; this blocks clearly unsafe requests early without weakening the upstream filter.
 - Image Studio options and validated prompt directions share one browser-safe module so the interface and server accept the same settings.
+- Apply saved AI preferences as style guidance only; never let them override task instructions, safety, source grounding, privacy, or required output formats, and do not silently ignore preference-read errors.

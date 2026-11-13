@@ -15,3 +15,6 @@
 - [x] Test successful generation, blocked prompts, errors, and responsive UI
 - [x] Expand Image Studio styles, palettes, lighting, and composition; verify generation
 - [ ] Add real textbooks/lecture notes and verify Ask about subject — waiting for the user's source files (available uploads are screenshots)
+- [ ] Smoke-test every available page and verify live AI status
+- [ ] Make AI personalization reliable and subordinate to task/source rules
+- [ ] Fix any reproduced issues and summarize remaining test limits
