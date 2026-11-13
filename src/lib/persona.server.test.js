@@ -27,7 +27,8 @@ describe("AI personalization boundaries", () => {
       instructions: "x".repeat(1_200),
     });
 
-    assert.equal(prompt.match(/x/g)?.length, 1_000);
+    const captured = prompt.match(/<student_preferences>\n(x+)\n<\/student_preferences>/);
+    assert.equal(captured?.[1]?.length, 1_000);
   });
 
   test("unknown saved settings safely fall back to defaults", () => {
