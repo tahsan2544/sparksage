@@ -36,6 +36,9 @@ export async function personaPrompt(supabase: SupabaseClient, userId: string): P
     .eq("user_id", userId)
     .maybeSingle();
   if (error) throw new Error(`Could not load your AI preferences: ${error.message}`);
+  if (!data) {
+    return formatPersona({ tone: "friendly", style: "balanced", language: "English", instructions: "" });
+  }
   return formatPersona({
     tone: data.ai_tone ?? "friendly",
     style: data.ai_style ?? "balanced",
